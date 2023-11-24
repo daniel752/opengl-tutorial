@@ -1,0 +1,9 @@
+{
+    "cmake.configureSettings": 
+    {
+      "CMAKE_BUILD_TYPE": "${buildType}"
+    },
+    "cmake.configureOnOpen": true,
+    "cmake.buildDirectory": "${workspaceFolder}/build"
+  }
+  
