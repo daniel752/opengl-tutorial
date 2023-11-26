@@ -1,3 +1,0 @@
-/home/daniel/opengl/tutorial/draw-shape/build/CMakeFiles/main.o.dir
-/home/daniel/opengl/tutorial/draw-shape/build/CMakeFiles/edit_cache.dir
-/home/daniel/opengl/tutorial/draw-shape/build/CMakeFiles/rebuild_cache.dir

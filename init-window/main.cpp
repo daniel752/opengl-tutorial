@@ -11,6 +11,7 @@ int main()
     // Initialise GLFW
     if(!glfwInit())
     {
+        // Initialisation failed
         std::cout << "GLFW initialisation failed" << std::endl;
         glfwTerminate();
         return 1;
@@ -29,6 +30,7 @@ int main()
     GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Main Window", nullptr, nullptr);
     if(!mainWindow)
     {
+        // Window creation failed
         std::cout << "GLFW window creation failed" << std::endl;
         glfwTerminate();
         return 1;
@@ -46,6 +48,7 @@ int main()
 
     if(glewInit() != GLEW_OK)
     {
+        // GLEW initialisation failed
         std::cout << "GLEW initialisation failed" << std::endl;
         glfwDestroyWindow(mainWindow);
         glfwTerminate();

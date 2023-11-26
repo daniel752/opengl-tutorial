@@ -13,8 +13,8 @@ constexpr GLint WIDTH = 800, HEIGHT = 600;
 // Working directory
 std::string PWD = std::filesystem::current_path().string();
 // Shader sources
-std::string VERTEX_SHADER_PATH = PWD + "/vShader.glsl";
-std::string FRAGMENT_SHADER_PATH = PWD + "/fShader.glsl";
+std::string VERTEX_SHADER_PATH = PWD + "/../vShader.glsl";
+std::string FRAGMENT_SHADER_PATH = PWD + "/../fShader.glsl";
 
 // Global variables
 // VAO - vertex array object, VBO - vertex buffer object
