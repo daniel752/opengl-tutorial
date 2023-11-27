@@ -14,7 +14,6 @@
 
 // Constants for window dimensions
 constexpr GLint WIDTH = 800, HEIGHT = 600;
-
 // Title for the window
 std::string TITLE = "Main Window";
 
@@ -28,11 +27,24 @@ std::string FRAGMENT_SHADER_PATH = PWD + "/../fShader.glsl";
 // OpenGL variables: Vertex array, vertex buffer, shader program, and uniform variable for the model matrix
 GLuint vertexArray, vertexBuffer, program, uniformModel;
 
-// Animation variables: Direction of movement, offset, maximum offset, and increment
+// Transformation
+// Translation (movement) variables: Direction of movement, offset, maximum offset, and moveSpeed
 bool isDirectionRight = true;
 float offset = 0.0;
 float maxOffset = 0.7;
-float increment = 0.005;
+float moveSpeed = 0.005;
+// Rotation variables
+const float TO_RADIANS = 3.14159 / 180;
+bool isRotationRight = true;
+float angle = 0.0;
+float rotationSpeed = 1;
+float maxRotation = 360;
+// Scaling variables
+bool isGrowing = true;
+float scale = 0.4;
+float maxScale = 1.0;
+float minScale = 0.1;
+float scaleSpeed = 0.01;
 
 // Number of vertices for the triangle
 GLuint TRIANGLE_VERTICES_COUNT = 3;
@@ -97,6 +109,39 @@ std::string readFile(std::string filename)
     file.close();
 
     return buffer.str();
+}
+
+void handleMove()
+{
+    if(isDirectionRight)
+        offset += moveSpeed;
+    else
+        offset -= moveSpeed;
+    // Reverse direction when reaching the maximum offset
+    if(abs(offset) >= maxOffset)
+        isDirectionRight = !isDirectionRight;
+}
+
+void handleRotation()
+{
+    if(isRotationRight)
+        angle += rotationSpeed;
+    else
+        angle -= rotationSpeed;
+    if(abs(angle) >= maxRotation)
+        isRotationRight = !isRotationRight;
+}
+
+void handleScale()
+{
+    if(isGrowing)
+        scale += scaleSpeed;
+    else
+        scale -= scaleSpeed;
+    if(scale >= maxScale)
+        isGrowing = !isGrowing;
+    else if(scale <= minScale)
+        isGrowing = !isGrowing;
 }
 
 // Main function
@@ -210,14 +255,9 @@ int main()
         glfwPollEvents();
 
         // Update animation variables
-        if(isDirectionRight)
-            offset += increment;
-        else
-            offset -= increment;
-
-        // Reverse direction when reaching the maximum offset
-        if(abs(offset) >= maxOffset)
-            isDirectionRight = !isDirectionRight;
+        handleMove();
+        handleRotation();
+        handleScale();
 
         // Clear the color buffer
         glClearColor(0, 0, 0, 1);
@@ -226,9 +266,15 @@ int main()
         // Use the shader program
         glUseProgram(program);
 
-        // Create a transformation matrix and set it as a uniform variable
+        // Create a transformation matrix
         glm::mat4 model(1.0f);
+        // Move shape in X and Y axes by 'offset' value
         model = glm::translate(model, glm::vec3(offset, offset, 0.0f));
+        // Rotate shape in Z axis by 'angle' value
+        model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(0.0f, 0.0f, 1.0f));
+        // Scale shape in X and Y axes by 'scale' value
+        model = glm::scale(model, scale * glm::vec3(1.0f, 1.0f, 0.0f));
+
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
         // Draw the shape
