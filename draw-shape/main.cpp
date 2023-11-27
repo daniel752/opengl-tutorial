@@ -19,18 +19,9 @@ std::string FRAGMENT_SHADER_PATH = PWD + "/../fShader.glsl";
 // Global variables
 // VAO - vertex array object, VBO - vertex buffer object
 // shaderProgram hold the program for shaders
-// xMove is used to transform (move) the shape along the x axis
-GLuint VAO, VBO, shaderProgram, xMove;
-// Boolean value for shape direction
-bool isDirectionRight = true;
-// Offset for shape
-float offset = 0.0;
-// Max offset for shape
-float maxOffset = 0.7;
-// How fast the shape moves
-float increment = 0.005;
+GLuint VAO, VBO, shaderProgram;
 
-// How much points the shape has
+// How much vertices the shape has
 constexpr GLint TRIANGLE_COUNT = 3;
 // Float array for triangle shape, each point has 3 coordinated (x,y,z)
 GLfloat TRIANGLE[] = 
@@ -171,7 +162,7 @@ int main()
     if(!shaderProgram)
     {
         std::cerr << "Error creating program" << std::endl;
-        exit(1);
+        return 1;
     }
 
     // Attach shader to program
@@ -187,7 +178,7 @@ int main()
         char error[1024];
         glGetProgramInfoLog(shaderProgram, sizeof(error), nullptr, error);
         std::cerr << "Shader program linking error:\n" << error << std::endl;
-        exit(1);
+        return 1;
     }
 
     glValidateProgram(shaderProgram);
@@ -197,7 +188,7 @@ int main()
         char error[1024];
         glGetProgramInfoLog(shaderProgram, sizeof(error), nullptr, error);
         std::cerr << "Shader program linking error:\n" << error << std::endl;
-        exit(1);
+        return 1;
     }
 
     // Delete shader (after they are linked into the program they are no longer needed)
@@ -210,9 +201,6 @@ int main()
     // Create triangle shape
     createShape(TRIANGLE, sizeof(TRIANGLE));
 
-    // Get uniform variable from shader program
-    xMove = glGetUniformLocation(shaderProgram, "xMove");
-
     // Main loop
     // Loop until window closed
     while(!glfwWindowShouldClose(mainWindow))
@@ -220,26 +208,11 @@ int main()
         // Get + Handle user input events
         glfwPollEvents();
 
-        // If shape is still moving right it will increment offset and keep moving right
-        // until reaches 'maxOffset' and switches direction to left
-        if(isDirectionRight)
-            offset += increment;    // Keep moving right
-        else
-            offset -= increment;    // Keep moving left
-
-        // If max offset has been reached then switch direction
-        if(abs(offset) >= maxOffset)
-            isDirectionRight = !isDirectionRight;
-
-
         // Clear window
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
-
-        // Update uniform 'xMove' value with offset's value
-        glUniform1f(xMove, offset);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, TRIANGLE_COUNT);

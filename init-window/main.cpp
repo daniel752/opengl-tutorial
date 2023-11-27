@@ -18,7 +18,7 @@ int main()
     }
 
     // Setup GLFW window properties
-    // OpenGL version
+    // OpenGL version - using version 3.3.x
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     // Core profile - No backwards compatibility 
