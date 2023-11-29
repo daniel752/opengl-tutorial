@@ -24,40 +24,58 @@ std::string PWD = std::filesystem::current_path().string();
 std::string VERTEX_SHADER_PATH = PWD + "/../vShader.glsl";
 std::string FRAGMENT_SHADER_PATH = PWD + "/../fShader.glsl";
 
-// OpenGL variables: Vertex array, vertex buffer, shader program, and uniform variable for the model matrix
-GLuint vertexArray, vertexBuffer, program, uniformModel;
+// OpenGL variables: Vertex array, vertex buffer, shader program, uniform variable for the model matrix
+GLuint vertexArray, vertexBuffer, program, uniformModel, indexBuffer;
 
 float scale = 0.4;
 
+const float TO_RADIANS = 3.14159 / 180;
+float angle = 0.0;
+float rotationSpeed = 1.0;
+
 // Number of vertices for the triangle
-GLuint SQUARE_VERTICES_COUNT = 6;
+GLuint TRIANGLE_VERTICES_COUNT = 12;
+
+// Indices represent each row in TRIANGLE array
+// For example 0, 3, 1 represent vertices at down left, top middle and far middle (the side triangle for the 3D triangle)
+unsigned int indices[] = 
+{
+    0, 3, 1,
+    1, 3, 2,
+    2, 3, 0,
+    0, 1, 2
+};
 
 // Vertex data for the triangle
-GLfloat SQUARE[] = 
+GLfloat TRIANGLE[] = 
 {
-    -1.0f, 1.0f, 0.0f,  // top left
-    1.0f, 1.0f, 0.0f,   // top right
-    1.0f, -1.0f, 0.0f,  // bottom right
-    1.0f, -1.0f, 0.0f,  // bottom right
-    -1.0f, -1.0f, 0.0f, // bottom left
-    -1.0f, 1.0f, 0.0f,  // top left
+    -1.0f, -1.0f, 0.0f,     // down left
+    0.0f, -1.0f, 1.0f,       // far middle
+    1.0f, -1.0f, 0.0f,       // down right
+    0.0f, 1.0f, 0.0f        // top middle
 };
 
 // Function to create a shape and bind it to OpenGL buffers
-void createShape(GLfloat* vertices, GLsizei size)
+void createShape(GLfloat* vertices)
 {
     glGenVertexArrays(1, &vertexArray);
     glBindVertexArray(vertexArray);
 
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(TRIANGLE), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // Function to compile a shader from source code
@@ -139,6 +157,8 @@ GLFWwindow* initWindow()
         return nullptr;
     }
 
+    glEnable(GL_DEPTH_TEST);
+
     // Set the viewport size
     glViewport(0, 0, widthBuffer, heightBuffer);
     
@@ -208,7 +228,7 @@ int main()
     glDeleteShader(fragmentShader);
 
     // Create the shape (triangle)
-    createShape(SQUARE, sizeof(SQUARE));
+    createShape(TRIANGLE);
 
     // Get the location of the uniform variable in the shader program
     uniformModel = glGetUniformLocation(program, "model");
@@ -218,20 +238,29 @@ int main()
         glfwPollEvents();
 
         glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(program);
 
         glm::mat4 model(1.0f);
-        model = glm::scale(model, scale * glm::vec3(1.0f, 1.0f, 0.0f));
+
+        angle += rotationSpeed;
+
+        if(angle == 360)
+            angle = 0;
+
+        model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(0.0f, 1.0f, 0.0f));
 
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(vertexArray);
-        glDrawArrays(GL_TRIANGLES, 0, SQUARE_VERTICES_COUNT);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        // Draw by elements according to 'indexBuffer'
+        glDrawElements(GL_TRIANGLES, TRIANGLE_VERTICES_COUNT, GL_UNSIGNED_INT, 0);
 
-        glUseProgram(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+        glUseProgram(0);
 
         glfwSwapBuffers(mainWindow);
     }
