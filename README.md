@@ -12,10 +12,10 @@ From the terminal run one of the options:<br>
 ### Build
 - From the root directory for that specific tutorial ([path]/opengl-tutorial/draw-shape/, [path]/opengl-tutorial/init-window/, etc) run:<br> 
 ``mkdir build && cd build``<br>
-- After build directory was created run:
+- After build directory was created run:<br>
 ``cmake ..``<br>
 - After that cmake will generate a Makefile in build/ directory,from build/ directory run:<br>
  ``make``<br>
 ## Run
-From the 'build/' directory run:
+From the 'build/' directory run:<br>
 ``./main.o``
