@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(interpolation)
+project(interpolation_and_projection)
 
 add_executable(main.o main.cpp)
 

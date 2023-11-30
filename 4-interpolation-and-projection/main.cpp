@@ -25,7 +25,8 @@ std::string VERTEX_SHADER_PATH = PWD + "/../vShader.glsl";
 std::string FRAGMENT_SHADER_PATH = PWD + "/../fShader.glsl";
 
 // OpenGL variables: Vertex array, vertex buffer, shader program, uniform variable for the model matrix
-GLuint vertexArray, vertexBuffer, program, uniformModel, indexBuffer;
+GLuint vertexArray, vertexBuffer, program, uniformModel, uniformProjection, indexBuffer;
+int widthBuffer, heightBuffer;
 
 float scale = 0.4;
 
@@ -36,7 +37,9 @@ float rotationSpeed = 1.0;
 // Number of vertices for the triangle
 GLuint TRIANGLE_VERTICES_COUNT = 12;
 
-// Indices represent each row in TRIANGLE array
+// Indexed Draws
+// Use of indexed draws allows us to draw vertices multiple times without declaring them multiple times for each side of the shape
+// Indices (indexes) represent each row in TRIANGLE array
 // For example 0, 3, 1 represent vertices at down left, top middle and far middle (the side triangle for the 3D triangle)
 unsigned int indices[] = 
 {
@@ -141,7 +144,7 @@ GLFWwindow* initWindow()
     }
 
     // Get framebuffer size
-    int widthBuffer, heightBuffer;
+    widthBuffer, heightBuffer;
     glfwGetFramebufferSize(mainWindow, &widthBuffer, &heightBuffer);
     
     // Make the context of the main window current
@@ -232,6 +235,9 @@ int main()
 
     // Get the location of the uniform variable in the shader program
     uniformModel = glGetUniformLocation(program, "model");
+    uniformProjection = glGetUniformLocation(program, "projection");
+
+    glm::mat4 projection = glm::perspective(45.0f,  (GLfloat)widthBuffer / (GLfloat)heightBuffer, 0.1f, 100.0f);
 
     while(!glfwWindowShouldClose(mainWindow))
     {
@@ -249,9 +255,11 @@ int main()
         if(angle == 360)
             angle = 0;
 
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -3.5f));
         model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(0.0f, 1.0f, 0.0f));
 
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -264,4 +272,8 @@ int main()
 
         glfwSwapBuffers(mainWindow);
     }
+
+    // Cleanup and terminate GLFW
+    glfwDestroyWindow(mainWindow);
+    glfwTerminate();
 }
