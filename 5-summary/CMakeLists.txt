@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(summary)
 
-add_executable(main.o main.cpp mesh.cpp shader.cpp)
+add_executable(main.o main.cpp mesh.cpp shader.cpp window.cpp)
 
 find_package(GLEW REQUIRED)
 target_link_libraries(main.o GLEW::GLEW)
