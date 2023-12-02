@@ -50,50 +50,13 @@ unsigned int indices[] =
 };
 
 // Vertex data for the triangle
-GLfloat TRIANGLE1[] = 
+GLfloat TRIANGLE[] = 
 {
     -1.0f, -1.0f, 0.0f,     // down left
     0.0f, -1.0f, 1.0f,       // far middle
     1.0f, -1.0f, 0.0f,       // down right
     0.0f, 1.0f, 0.0f        // top middle
 };
-
-GLfloat TRIANGLE2[] = 
-{
-    -6.0f, -1.0f, 0.0f,     // down left
-    -5.0f, -1.0f, 1.0f,       // far middle
-    -4.0f, -1.0f, 0.0f,       // down right
-    -5.0f, 1.0f, 0.0f        // top middle
-};
-
-GLfloat TRIANGLE3[] = 
-{
-    4.0f, -1.0f, 0.0f,     // down left
-    5.0f, -1.0f, 1.0f,       // far middle
-    6.0f, -1.0f, 0.0f,       // down right
-    5.0f, 1.0f, 0.0f        // top middle
-};
-
-Mesh* createShape(int index)
-{
-    Mesh* mesh = new Mesh();
-    switch(index)
-    {
-        case 1:
-            mesh->create(TRIANGLE1, indices, 12, 12);
-            break;
-        
-        case 2:
-            mesh->create(TRIANGLE2, indices, 12, 12);
-            break;
-        
-        case 3:
-            mesh->create(TRIANGLE3, indices, 12, 12);
-            break;
-    }
-
-    return mesh;
-}
 
 int main()
 {
@@ -109,9 +72,16 @@ int main()
     // Add shader to shaders vector
     shaders.push_back(*shader);
 
-    // Add meshed (triangles) to meshes vector
-    for(int i = 1; i <= 3; i++)
-        meshes.push_back(createShape(i));
+    // Creating new Mesh object to create and render triangle meshes
+    Mesh* mesh = new Mesh();
+    mesh->create(TRIANGLE, indices, 12, 12);
+    meshes.push_back(mesh);
+    mesh->create(TRIANGLE, indices, 12, 12);
+    meshes.push_back(mesh);
+    mesh->create(TRIANGLE, indices, 12, 12);
+    meshes.push_back(mesh);
+
+    GLint uniformProjection = 0, uniformModel = 0;
 
     // Setup projection (camera)
     // Field-of-view = 45
@@ -126,16 +96,10 @@ int main()
     // Keep window open until should close
     while(!window.isShouldClose())
     {
-        // GLFW function to handle basic window handling and inputs
-        glfwPollEvents();
-
         // Clear background to black
         glClearColor(0, 0, 0, 1);
         // Clear color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Use shader program
-        shaders[0].useShader();
 
         // Increase angle
         angle += rotationSpeed;
@@ -145,25 +109,39 @@ int main()
         if(angle == 360)
             angle = 0;
 
-        // Initialise new matrix 4x4 (model) to use for moving, rotating and scaling our objects
+        // Use shader program
+        shaders[0].useShader();
+        uniformProjection = shaders[0].getProjectionLocation();
+        uniformModel = shaders[0].getModelLocation();
+
+        shaders[0].setMat4("projection", projection);
+
+        // First Triangle
         glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(1.0f, 0.0f, 0.0f));
+        shaders[0].setMat4("model", model);
+        meshes[0]->render();
 
-        // Set location of objects
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -3.5f));
-        // Set rotation of objects
-        // Rotating objects around the Y axis
-        model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(0.0f, 1.0f, 0.0f));
+        // Second Triangle
+        model = glm::mat4(1.0f); // Reset the model matrix
+        model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(-1.0f, 0.0f, 0.0f));
+        shaders[0].setMat4("model", model);
+        meshes[1]->render();
 
-        glUniformMatrix4fv(shaders[0].getModelLocation(), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(shaders[0].getProjectionLocation(), 1, GL_FALSE, glm::value_ptr(projection));
-    
-        // Render meshes
-        for(auto& mesh : meshes)
-            mesh->render();
+        // Third Triangle
+        model = glm::mat4(1.0f); // Reset the model matrix
+        model = glm::translate(model, glm::vec3(3.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, angle * TO_RADIANS, glm::vec3(-1.0f, 0.0f, 0.0f));
+        shaders[0].setMat4("model", model);
+        meshes[2]->render();
 
         glUseProgram(0);
 
+        // GLFW swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         window.swapBuffers();
+        glfwPollEvents();
     }
 
     // Cleanup and terminate GLFW

@@ -9,6 +9,10 @@
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 class Shader
 {
 public:
@@ -21,6 +25,7 @@ public:
     void clearShader();
     GLuint getProjectionLocation();
     GLuint getModelLocation();
+    void setMat4(const std::string& name, const glm::mat4& mat) const;
 
 private:
     GLuint shaderID,  uniformProjection, uniformModel;

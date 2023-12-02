@@ -19,7 +19,7 @@ std::string Shader::readFile(std::string filename)
     if(!file.is_open())
     {
         std::cerr << "Failed to open file " << filename << std::endl;
-        return nullptr;
+        return "";
     }
 
     std::stringstream buffer;
@@ -49,6 +49,8 @@ void Shader::addShader(GLuint program, const char* shaderCode, GLenum shaderType
     }
 
     glAttachShader(program, shader);
+
+    glDeleteShader(shader);
 }
 
 void Shader::compileShader(const char* vertexCode, const char* fragmentCode)
@@ -126,4 +128,9 @@ GLuint Shader::getProjectionLocation()
 GLuint Shader::getModelLocation()
 {
     return uniformModel;
+}
+
+void Shader::setMat4(const std::string& name, const glm::mat4& mat) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
