@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
-project(init_window)
+project(create_window)
 
 # Add source files
-add_executable(main.o main.cpp)
+add_executable(main.o main.cpp glWindow.cpp)
 
 # Find and link GLEW
 find_package(GLEW REQUIRED)

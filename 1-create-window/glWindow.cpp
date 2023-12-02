@@ -1,27 +1,27 @@
-#include "window.h"
+#include "glWindow.h"
 
-Window::Window()
+glWindow::glWindow()
 {
-    mainWindow = 0;
+    window = 0;
     title = "Main Window";
     width = 800;
     height = 600;
 }
 
-Window::Window(std::string windowTitle, GLint windowWidth, GLint windowHeight)
+glWindow::glWindow(std::string windowTitle, GLint windowWidth, GLint windowHeight)
 {
     title = windowTitle;
     width = windowWidth;
     height = windowHeight;
 }
 
-Window::~Window()
+glWindow::~glWindow()
 {
-    glfwDestroyWindow(mainWindow);
+    glfwDestroyWindow(window);
     glfwTerminate();
 }
 
-int Window::initialise()
+int glWindow::initialise()
 {
     // Initialize GLFW
     if(!glfwInit())
@@ -38,8 +38,8 @@ int Window::initialise()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     // Create the main window
-    mainWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-    if(!mainWindow)
+    window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    if(!window)
     {
         std::cerr << "Failed to create main window" << std::endl;
         glfwTerminate();
@@ -47,17 +47,17 @@ int Window::initialise()
     }
 
     // Get framebuffer size
-    glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
+    glfwGetFramebufferSize(window, &bufferWidth, &bufferHeight);
     
     // Make the context of the main window current
-    glfwMakeContextCurrent(mainWindow);
+    glfwMakeContextCurrent(window);
 
     // Initialize GLEW
     glewExperimental = GL_TRUE;
     if(glewInit() != GLEW_OK)
     {
         std::cerr << "Failed to initialize GLEW" << std::endl;
-        glfwDestroyWindow(mainWindow);
+        glfwDestroyWindow(window);
         glfwTerminate();
         return GL_FALSE;
     }
@@ -66,6 +66,20 @@ int Window::initialise()
 
     // Set the viewport size
     glViewport(0, 0, bufferWidth, bufferHeight);
+    glfwSetFramebufferSizeCallback(window, staticFrameBufferSizeCallback);
 
     return GL_TRUE;
+}
+
+// Define the static member function for the callback
+void glWindow::staticFrameBufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    // Forward the call to the non-static member function
+    static_cast<glWindow*>(glfwGetWindowUserPointer(window))->frameBufferSizeCallback(window, width, height);
+}
+
+// Define the non-static member function for the callback
+void glWindow::frameBufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
 }
