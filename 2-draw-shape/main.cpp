@@ -2,11 +2,6 @@
 #include "shader.h"
 #include "mesh.h"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <filesystem>
-
 
 // Window dimensions
 constexpr GLint WIDTH = 800, HEIGHT = 600;
