@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(draw_shape)
 
 # Add source files
-add_executable(main.o main.cpp)
+add_executable(main.o main.cpp glWindow.cpp shader.cpp mesh.cpp)
 
 # Find and link GLEW
 find_package(GLEW REQUIRED)
