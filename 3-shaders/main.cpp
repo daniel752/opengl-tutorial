@@ -12,8 +12,6 @@ std::string PWD = std::filesystem::current_path().string();
 std::string VERTEX_SHADER_PATH = PWD + "/../shaders/vShader.glsl";
 std::string FRAGMENT_SHADER_PATH = PWD + "/../shaders/fShader.glsl";
 
-// How much vertices the shape has
-constexpr GLint TRIANGLE_COUNT = 3;
 // Float array for triangle shape, each point has 3 coordinated (x,y,z)
 GLfloat TRIANGLE[] = 
 {   // Positions             // Colors
@@ -21,6 +19,13 @@ GLfloat TRIANGLE[] =
      1.0f, -1.0f, 0.0f,     0.0f, 1.0f, 0.0f,
      0.0f,  1.0f, 0.0f,     0.0f, 0.0f, 1.0f,
 };
+
+// GLfloat TRIANGLE[] = 
+// {
+//     -1.0f, -1.0f, 0.0f,
+//      1.0f, -1.0f, 0.0f,
+//      0.0f,  1.0f, 0.0f,
+// };
 
 int main()
 {
@@ -37,6 +42,8 @@ int main()
     // Create new Mesh object to handle triangle shape.
     Mesh mesh(TRIANGLE, sizeof(TRIANGLE), GL_FLOAT, GL_FALSE, 6 * sizeof(float), pointers);
 
+    // Mesh mesh(TRIANGLE, sizeof(TRIANGLE), GL_FLOAT, GL_FALSE, 0, 0);
+
     // Main loop
     // Run until window should close
     while (!window.isShouldClose())
@@ -46,7 +53,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         // User shader program with our triangle with shaders.
-        shader.useShader();
+        shader.use();
 
         // Render triangle
         mesh.render();

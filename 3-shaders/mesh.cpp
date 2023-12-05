@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-Mesh::Mesh(GLfloat* vertices, int verticesSize, GLenum type, bool normalize, GLsizei stride, GLvoid** pointers)
+Mesh::Mesh(GLfloat* vertices, int verticesSize, GLenum type, bool normalize = GL_FALSE, GLsizei stride = 0, GLvoid** pointers = 0)
 {
     // Generate 1 vertex array (VAO)
     glGenVertexArrays(1, &vertexArray);
@@ -17,17 +17,27 @@ Mesh::Mesh(GLfloat* vertices, int verticesSize, GLenum type, bool normalize, GLs
     // Third param specifies the type of data for each component in array (int, float, etc.)
     // Fourth param specifies whether we want to normalize data (clamped to range of -1 to 1 for signed values and 0 to 1 for unsigned values)
     // Fifth param specifies stride (specifies the byte offset between consecutive vertex attributes), if stride is 0 than there's is no gap between vertex attributes
-    glVertexAttribPointer(0, 3, type, normalize, stride, pointers[0]);
-    // Enable generic vertex attribute array for vertex attribute at index 0
-    glEnableVertexAttribArray(0);
+    // These vertex attributes are for position
+    if(stride == 0)
+    {
+        glVertexAttribPointer(0, 3, type, GL_FALSE, 0, 0);
+        // Enable generic vertex attribute array for vertex attribute at index 0
+        glEnableVertexAttribArray(0);        
+    }
+    else
+    {
+        glVertexAttribPointer(0, 3, type, normalize, stride, pointers[0]);
+        // Enable generic vertex attribute array for vertex attribute at index 0
+        glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, type, normalize, stride, pointers[1]);
-    glEnableVertexAttribArray(1);
-
+        // These vertex attributes are for color
+        glVertexAttribPointer(1, 3, type, normalize, stride, pointers[1]);
+        glEnableVertexAttribArray(1);
+    }
     // Unbind vertex buffer
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     // Unbind vertex array
-    // glBindVertexArray(0);
+    glBindVertexArray(0);
 }
 
 Mesh::~Mesh()

@@ -2,7 +2,7 @@
 
 Shader::Shader(const char* vertexLocation, const char* fragmentLocation)
 {
-    shaderID = 0;
+    ID = 0;
 
     // Read shader source code from files
     std::string vertexShaderSource = readFile(vertexLocation);
@@ -13,7 +13,7 @@ Shader::Shader(const char* vertexLocation, const char* fragmentLocation)
 
 Shader::~Shader()
 {
-    clearShader();
+    clear();
 }
 
 // Function to read the content of a file into a string
@@ -60,50 +60,65 @@ void Shader::addShader(GLuint program, const char* shaderCode, GLenum shaderType
 void Shader::compileShader(const char* vertexCode, const char* fragmentCode)
 {
     // Create shader program
-    shaderID = glCreateProgram();
-    if(!shaderID)
+    ID = glCreateProgram();
+    if(!ID)
     {
         std::cerr << "Failed to create shader program" << std::endl;
         return;
     }
 
-    addShader(shaderID, vertexCode, GL_VERTEX_SHADER);
-    addShader(shaderID, fragmentCode, GL_FRAGMENT_SHADER);
+    addShader(ID, vertexCode, GL_VERTEX_SHADER);
+    addShader(ID, fragmentCode, GL_FRAGMENT_SHADER);
 
     // Link the program
-    glLinkProgram(shaderID);
+    glLinkProgram(ID);
     GLint success;
-    glGetProgramiv(shaderID, GL_LINK_STATUS, &success);
+    glGetProgramiv(ID, GL_LINK_STATUS, &success);
     if(!success)
     {
         char error[1024];
-        glGetProgramInfoLog(shaderID, sizeof(error), nullptr, error);
+        glGetProgramInfoLog(ID, sizeof(error), nullptr, error);
         std::cerr << "Program linking error:\n" << error << std::endl;
         return;
     }
 
     // Validate the program
-    glValidateProgram(shaderID);
-    glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &success);
+    glValidateProgram(ID);
+    glGetProgramiv(ID, GL_VALIDATE_STATUS, &success);
     if(!success)
     {
         char error[1024];
-        glGetProgramInfoLog(shaderID, sizeof(error), nullptr, error);
+        glGetProgramInfoLog(ID, sizeof(error), nullptr, error);
         std::cerr << "Program validation error:\n" << error << std::endl;
         return;
     }
 }
 
-void Shader::useShader()
+void Shader::use()
 {
-    glUseProgram(shaderID);
+    glUseProgram(ID);
 }
 
-void Shader::clearShader()
+void Shader::clear()
 {
-    if(shaderID != 0)
+    if(ID != 0)
     {
-        glDeleteProgram(shaderID);
-        shaderID = 0;
+        glDeleteProgram(ID);
+        ID = 0;
     }
+}
+
+void Shader::setBool(const std::string &name, bool value) const
+{
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+}
+
+void Shader::setInt(const std::string &name, int value) const
+{
+    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+}
+
+void Shader::setFloat(const std::string &name, float value) const
+{
+    glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }

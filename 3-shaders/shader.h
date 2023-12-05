@@ -42,16 +42,21 @@ public:
     /**
      * @brief Use this object's shader program.
     */
-    void useShader();
+    void use();
     /**
      * @brief Clear shader program.
     */
-    void clearShader();
+    void clear();
 
-    GLuint getShaderID() const { return shaderID; }
+    GLuint getID() const { return ID; }
+
+    // Utility uniform functions
+    void setBool(const std::string& name, bool value) const;
+    void setInt(const std::string& name, int value) const;
+    void setFloat(const std::string& name, float value) const;
 
 private:
-    GLuint shaderID; // Holds shader program ID
+    GLuint ID; // Holds shader program ID
 
     /**
      * @brief Compile vertex and fragment shaders.
