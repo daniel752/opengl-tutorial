@@ -13,6 +13,8 @@ std::string PWD = std::filesystem::current_path().string();
 std::string VERTEX_SHADER_PATH = PWD + "/../shaders/vShader.glsl";
 std::string FRAGMENT_SHADER_PATH = PWD + "/../shaders/fShader.glsl";
 
+float mixValue = 0.2f;
+
 // Float array for triangle shape, each point has 3 coordinated (x,y,z)
 GLfloat RECTANGLE[] = 
 {   // Positions             // Colors
@@ -43,6 +45,21 @@ unsigned int INDICES[] =
     0, 1, 2,    // First triangle (bottom left + bottom right + top right)
     0, 2, 3,    // Second triangle (bottom left + top right + top left)
 };
+
+void processInput(GLFWwindow* window)
+{
+    // If user press up key button
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        mixValue += 0.01;
+        if((mixValue) >= 1.0)
+            mixValue = 1.0;
+
+    // If user press down key button
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        mixValue -= 0.01;
+        if(mixValue <= 0.0)
+            mixValue = 0.0;
+}
 
 int main()
 {
@@ -91,9 +108,17 @@ int main()
     // Run until window should close
     while (!window.isShouldClose())
     {
+        processInput(window.getGlWindow());
+        // window.processInput(GLFW_KEY_UP, &mixValue, 0.01f);
+        // window.processInput(GLFW_KEY_DOWN, &mixValue, -0.01f);
+
         // Clear window to black screen
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // Updating shader with new "mixValue" value
+        // The alpha between the textures can be increased or decreases by pressing the UP/DOWN button on keyboard 
+        shader.setFloat("mixValue", mixValue);
 
         // Render triangle
         mesh.render(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
