@@ -54,29 +54,38 @@ int main()
     
     // Create new Mesh object to handle triangle shape.
     Mesh mesh(RECTANGLE, sizeof(RECTANGLE), COLORS, sizeof(COLORS), TEXTURE, sizeof(TEXTURE), INDICES, sizeof(INDICES), GL_FLOAT, false, 0);
+    // Initialise VAO (vertex array object) and VBO (vertex buffer object) for mesh
+    mesh.initialise(GL_FLOAT, GL_FALSE);
+    // Add indices (elements) attribute to mesh
+    mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, INDICES, sizeof(INDICES), &mesh.elementBuffer);
+    // Add color attribute to mesh
+    mesh.addAttribute(1, GL_ARRAY_BUFFER, 3, GL_FLOAT, GL_FALSE, COLORS, sizeof(COLORS), &mesh.colorBuffer);
+    // Add texture attribute to mesh
+    mesh.addAttribute(2, GL_ARRAY_BUFFER, 2, GL_FLOAT, GL_FALSE, TEXTURE, sizeof(TEXTURE), &mesh.textureBuffer);
+    // Unbind mesh from global state
+    mesh.unbind();
 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Generating texture and configuring parameters
+    GLuint texture1, texture2;
+    shader.loadTexture(std::filesystem::current_path().concat("/../container.jpg"), &texture1, GL_TEXTURE_2D, 0, GL_RGB, 0, GL_RGB, GL_UNSIGNED_BYTE);
+    shader.loadTexture(std::filesystem::current_path().concat("/../awesomeface.png"), &texture2, GL_TEXTURE_2D, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
 
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load(std::filesystem::current_path().concat("/../texture.jpg").c_str(), &width, &height, &nrChannels, 0);
-    if(!data)
-    {
-        std::cout << "Failed to load texture" << std::endl;
-        return 1;
-    }
+    // OpenGL should have provide 16 texture units from the GPU
+    // Texture units can be activated using "GL_TEXTURE0" to "GL_TEXTURE15"
+    // They are defined in order so we could also get GL_TEXTURE8 via GL_TEXTURE0 + 8 for example, 
+    // which is useful when we'd have to loop over several texture units. 
+    glActiveTexture(GL_TEXTURE0);   // Activate texture unit 0
+    glBindTexture(GL_TEXTURE_2D, texture1); // Bind texture unit 0 to "texture1"
+    glActiveTexture(GL_TEXTURE1);   // Activate texture unit 1
+    glBindTexture(GL_TEXTURE_2D, texture2); // Bind texture unit 1 to "texture2"
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    // Use shader program before setting uniforms
+    shader.use();
 
-    free(data);
+    // Set uniform sampler2D "texture1" to texture unit 0
+    shader.setInt("texture1", 0);
+    // Set uniform sampler2D "texture1" to texture unit 1
+    shader.setInt("texture2", 1);
 
     // Main loop
     // Run until window should close
@@ -86,15 +95,9 @@ int main()
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        // User shader program with our triangle with shaders.
-        shader.use();
-
         // Render triangle
-        mesh.render();
-        // Unbind shader program
-        glUseProgram(0);
+        mesh.render(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
         // OpenGL uses a double buffer (front and back buffers) technique for rendering
         // All of the rendering commands will go to back buffer
         // After all of the rendering commands are done we switch to the front buffer which has the final output image
@@ -104,6 +107,9 @@ int main()
         // Get + Handle glfwWindow I/O
         glfwPollEvents();
     }
+    mesh.clear();
+    shader.unbind();
+    shader.clear();
 
     return 0;
 }

@@ -1,4 +1,6 @@
 #include "shader.h"
+#include "stb_image.h"
+
 
 Shader::Shader(const char* vertexLocation, const char* fragmentLocation)
 {
@@ -16,7 +18,6 @@ Shader::~Shader()
     clear();
 }
 
-// Function to read the content of a file into a string
 std::string Shader::readFile(std::string filename)
 {
     std::fstream file(filename, std::ios::in);
@@ -31,6 +32,39 @@ std::string Shader::readFile(std::string filename)
     file.close();
 
     return buffer.str();
+}
+
+void Shader::loadTexture(std::string filename, GLuint *texture, GLenum target, GLint level, GLint internalFormat, GLint border, GLint format, GLenum type)
+{
+    glGenTextures(1, texture);
+    glBindTexture(target, *texture);
+    // set the texture wrapping parameters
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    
+    // stbi_set_flip_vertically_on_load(true);
+    // Loading texture from local storage
+    int width, height, nrChannels;
+    unsigned char* data = nullptr;
+    data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+    if(!data)
+    {
+        std::cout << "Failed to load texture" << std::endl;
+        return;
+    }
+    glTexImage2D(target, level, internalFormat, width, height, border, format, type, data);
+    glGenerateMipmap(target);
+
+    free(data);
+}
+
+void Shader::unbind()
+{
+    glUseProgram(0);
 }
 
 void Shader::addShader(GLuint program, const char* shaderCode, GLenum shaderType)

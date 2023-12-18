@@ -15,7 +15,7 @@ public:
      * @param vertices Vertices (points) of mesh in space.
      * @param verticesSize Size of vertices in memory.
     */
-    Mesh(GLfloat* vertices, int verticesSize, GLfloat* colors, int colorsSize, GLfloat* textureCoordinates, int textureCoordinatesSize, unsigned int* indices, int indicesSize, GLenum type, bool normalize, GLsizei stride);
+    Mesh(GLfloat *vertices, int verticesSize, GLfloat *colors, int colorsSize, GLfloat *textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride);
     /**
      * @brief Destructor.
     */
@@ -23,15 +23,29 @@ public:
 
     // Methods
     /**
+     * @brief Initialise mesh object
+    */
+    void initialise(GLenum type, bool normalize);
+
+    void addAttribute(int index, GLenum target, int vertexSize, GLenum type, bool normalize, void *data, int dataSize, GLuint *buffer);
+
+    void unbind();
+
+    /**
      * @brief Render mesh.
     */
-    void render();
+    void render(GLenum mode, GLsizei count, GLenum type, const void *indices);
+    
     /**
      * @brief Clear mesh.
     */
     void clear();
 
+    // Fields
+    GLuint vertexArray, vertexBuffer, colorBuffer, textureBuffer, elementBuffer;
+
 private:
-    GLuint vertexArray, vertexBuffer, elementBuffer, colorBuffer, textureBuffer;
-    // unsigned int* indices;
+    GLfloat *vertices, *colors, *textureCoordinates;
+    int verticesSize, colorsSize, textureCoordinatesSize, indicesSize;
+    GLuint *indices;
 };

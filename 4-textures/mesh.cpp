@@ -1,15 +1,36 @@
 #include "mesh.h"
 
-Mesh::Mesh(GLfloat* vertices, int verticesSize, GLfloat* colors, int colorsSize, GLfloat* textureCoordinates, int textureCoordinatesSize, unsigned int* indices, int indicesSize, GLenum type, bool normalize = GL_FALSE, GLsizei stride = 0)
+Mesh::Mesh(GLfloat* vertices, int verticesSize, GLfloat* colors, int colorsSize, GLfloat* textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride) :
+    vertices(vertices), verticesSize(verticesSize), // Initialise vertices
+    colors(colors), colorsSize(colorsSize), // Initialise colors
+    textureCoordinates(textureCoordinates), textureCoordinatesSize(textureCoordinatesSize), // Initialise texture coordinates
+    indices(indices), indicesSize(indicesSize),  // Initialise indices (elements)
+    vertexArray(0),
+    vertexBuffer(0),
+    colorBuffer(0),
+    textureBuffer(0),
+    elementBuffer(0)    
+{
+
+}
+
+Mesh::~Mesh()
+{
+    clear();
+    vertices = nullptr;
+    colors = nullptr;
+    textureCoordinates = nullptr;
+    indices = nullptr;
+}
+
+void Mesh::initialise(GLenum type, bool normalize)
 {
     // Generate 1 vertex array (VAO)
     glGenVertexArrays(1, &vertexArray);
     // Generate 1 vertex buffer (VBO)
     glGenBuffers(1, &vertexBuffer);
     // Generate 1 element buffer (EBO)
-    glGenBuffers(1, &elementBuffer);
-    glGenBuffers(1, &colorBuffer);
-    glGenBuffers(1, & textureBuffer);
+    // glGenBuffers(1, &elementBuffer);
     
     // Bind vertex array and vertex buffer so we can create the actual mesh data
     glBindVertexArray(vertexArray);
@@ -23,37 +44,40 @@ Mesh::Mesh(GLfloat* vertices, int verticesSize, GLfloat* colors, int colorsSize,
     glVertexAttribPointer(0, 3, type, normalize, 0, 0);
     // Enable generic vertex attribute array for vertex attribute at index 0
     glEnableVertexAttribArray(0);
+}
 
-    glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-    glBufferData(GL_ARRAY_BUFFER, colorsSize, colors, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, type, normalize, 0, 0);
-    glEnableVertexAttribArray(1);
+void Mesh::addAttribute(int index, GLenum target, int vertexSize, GLenum type, bool normalize, void *data, int dataSize, GLuint *buffer = nullptr)
+{
+    if(vertexArray == 0)
+        initialise(type, normalize);
+    
+    if(buffer)
+        glGenBuffers(1, buffer);
 
-    glBindBuffer(GL_ARRAY_BUFFER, textureBuffer);
-    glBufferData(GL_ARRAY_BUFFER, textureCoordinatesSize, textureCoordinates, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, type, normalize, 0, 0);
-    glEnableVertexAttribArray(2);
+    glBindBuffer(target, *buffer);
+    glBufferData(target, dataSize, data, GL_STATIC_DRAW);
+    
+    if(target == GL_ARRAY_BUFFER)
+    {
+        glVertexAttribPointer(index, vertexSize, type, normalize, 0, 0);
+        glEnableVertexAttribArray(index);
+    }
+}
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize, indices, GL_STATIC_DRAW);
+void Mesh::unbind()
+{
     // Unbind vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     // Unbind vertex array
     glBindVertexArray(0);
 }
 
-Mesh::~Mesh()
-{
-    clear();
-}
-
-
-void Mesh::render()
+void Mesh::render(GLenum mode, GLsizei count, GLenum type, const void *indices)
 {
     // Bind vertex array
     glBindVertexArray(vertexArray);
     // Draw vertex array according to indices (elements)
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(mode, count, type, indices);
 
     // Unbind vertex array
     glBindVertexArray(0);
@@ -61,15 +85,33 @@ void Mesh::render()
 
 void Mesh::clear()
 {
+    if(vertexArray != 0)
+    {
+        glDeleteVertexArrays(1, &vertexArray);
+        vertexArray = 0;
+    }
+
     if(vertexBuffer != 0)
     {
         glDeleteBuffers(1, &vertexBuffer);
         vertexBuffer = 0;
     }
 
-    if(vertexArray != 0)
+    if(colorBuffer != 0)
     {
-        glDeleteBuffers(1, &vertexArray);
-        vertexArray = 0;
+        glDeleteBuffers(1, &colorBuffer);
+        colorBuffer = 0;
+    }
+
+    if (textureBuffer != 0)
+    {
+        glDeleteBuffers(1, &textureBuffer);
+        textureBuffer = 0;
+    }
+    
+    if(elementBuffer != 0)
+    {
+        glDeleteBuffers(1, &elementBuffer);
+        elementBuffer = 0;
     }
 }
