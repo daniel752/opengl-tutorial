@@ -78,9 +78,6 @@ void Mesh::render(GLenum mode, GLsizei count, GLenum type, const void *indices)
     glBindVertexArray(vertexArray);
     // Draw vertex array according to indices (elements)
     glDrawElements(mode, count, type, indices);
-
-    // Unbind vertex array
-    glBindVertexArray(0);
 }
 
 void Mesh::copy(GLenum mode, GLsizei count, GLenum type, const void *indices)

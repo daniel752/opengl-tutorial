@@ -17,9 +17,12 @@ std::string PWD = std::filesystem::current_path().string();
 std::string VERTEX_SHADER_PATH = PWD + "/../shaders/vShader.glsl";
 std::string FRAGMENT_SHADER_PATH = PWD + "/../shaders/fShader.glsl";
 
-// Translation (location/movement) value to multiply translation matrix
-glm::vec3 translationVec(1.0f);
-float translationValue = 0;
+// Matrix 4x4 for tranformation calculations
+glm::mat4 transform;
+// Translation (location/movement) vector 3 (x,y,z) to move object
+glm::vec3 translationVec(0.0f);
+// Speed of object movement
+float translationSpeed = 0.01;
 // Scale value to multiply scaling matrix
 float scaleValue = 0.2;
 // Rotation value to multiply rotation matrix
@@ -68,7 +71,7 @@ void processInput(GLFWwindow* window)
     if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         scaleValue -= 0.01;
         if(scaleValue <= 0)
-            scaleValue = 0;
+            scaleValue = 0.99;
 
     // If user press right key button - rotate to right
     if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
@@ -82,36 +85,28 @@ void processInput(GLFWwindow* window)
             if(rotationValue >= 360)
                 rotationValue = 0;
 
+    // If user press "W" key button - move up the y axis
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-        translationValue += 0.01;
-        translationVec = glm::vec3(0.0f, 1.0f, 0.0f);
-        if(translationValue >= 1)
-            translationValue = 0;
+        translationVec = glm::vec3(translationVec.x, translationVec.y + translationSpeed, 0.0f);
     }
 
+    // If user press "S" key button - move down the y axis
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-        translationValue -= 0.01;
-        translationVec = glm::vec3(0.0f, 1.0f, 0.0f);
-        if(translationValue <= -1)
-            translationValue = 0;
+        translationVec = glm::vec3(translationVec.x, translationVec.y - translationSpeed, 0.0f);
     }
 
+    // If user press "A" key button - move up x axis (move right)
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        translationValue -= 0.01;
-        translationVec = glm::vec3(1.0f, 0.0f, 0.0f);
-        if(translationValue <= -1)
-            translationValue = 0;
+        translationVec = glm::vec3(translationVec.x - translationSpeed, translationVec.y, 0.0f);
     }
 
+    // If user press "D" key button - move down x axis (move left)
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-        translationValue += 0.01;
-        translationVec = glm::vec3(1.0f, 0.0f, 0.0f);
-        if(translationValue >= 1)
-            translationValue = 0;
+        translationVec = glm::vec3(translationVec.x + translationSpeed, translationVec.y, 0.0f);
     }
 }
 
@@ -172,8 +167,8 @@ int main()
 
         // Tranformation matrix
         // Creating new 4x4 matrix with all zeroes except the diagonal which equals 1
-        glm::mat4 transform(1.0f);
-        transform = glm::translate(transform, translationValue * translationVec);
+        transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, translationVec);
         // Applying scaling to transformation matrix
         transform = glm::scale(transform, glm::vec3(scaleValue));
         // Applying rotation to transformation matrix
@@ -190,7 +185,9 @@ int main()
         // transform = glm::scale(transform, glm::vec3(scaleValue));
         // transform = glm::rotate(transform, glm::radians(rotationValue), glm::vec3(0.0, 0.0, 1.0));
         // shader.setMatrix4fv("transform", &transform[0][0]);
-        // mesh.render(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        // mesh.copy(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        mesh.unbind();
 
         // OpenGL uses a double buffer (front and back buffers) technique for rendering
         // All of the rendering commands will go to back buffer
