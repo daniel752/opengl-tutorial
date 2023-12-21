@@ -84,8 +84,8 @@ int main()
 
     // Generating texture and configuring parameters
     GLuint texture1, texture2;
-    shader.loadTexture(std::filesystem::current_path().concat("/../container.jpg"), &texture1, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGB, 0, GL_RGB, GL_UNSIGNED_BYTE);
-    shader.loadTexture(std::filesystem::current_path().concat("/../awesomeface.png"), &texture2, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+    shader.loadTexture(std::filesystem::current_path().concat("/../../assets/container.jpg"), &texture1, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGB, 0, GL_RGB, GL_UNSIGNED_BYTE);
+    shader.loadTexture(std::filesystem::current_path().concat("/../../assets/awesomeface.png"), &texture2, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
 
     // OpenGL should have provide 16 texture units from the GPU
     // Texture units can be activated using "GL_TEXTURE0" to "GL_TEXTURE15"

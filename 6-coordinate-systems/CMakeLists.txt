@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
-project(transformation)
 
-add_executable(main.o main.cpp)
+project(coordinate_systems)
+
+add_executable(main.o main.cpp glWindow.cpp mesh.cpp shader.cpp stb_image.cpp)
 
 find_package(GLEW REQUIRED)
 target_link_libraries(main.o GLEW::GLEW)

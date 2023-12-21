@@ -9,7 +9,7 @@
 
 
 // Window dimensions
-constexpr GLint WIDTH = 800, HEIGHT = 600;
+GLfloat WIDTH = 800.0f, HEIGHT = 600.0f;
 std::string TITLE = "Main Window";
 // Working directory
 std::string PWD = std::filesystem::current_path().string();
@@ -17,8 +17,12 @@ std::string PWD = std::filesystem::current_path().string();
 std::string VERTEX_SHADER_PATH = PWD + "/../shaders/vShader.glsl";
 std::string FRAGMENT_SHADER_PATH = PWD + "/../shaders/fShader.glsl";
 
-// Matrix 4x4 for tranformation calculations
-glm::mat4 transform;
+// Model transformation matrix
+glm::mat4 model;
+// View transformation matrix
+glm::mat4 view;
+// Projection transformation matrix
+glm::mat4 projection;
 // Translation (location/movement) vector 3 (x,y,z) to move object
 glm::vec3 translationVec(0.0f);
 // Speed of object movement
@@ -28,35 +32,108 @@ float scaleValue = 0.2;
 // Rotation value to multiply rotation matrix
 float rotationValue = 0;
 
-// Float array for triangle shape, each point has 3 coordinated (x,y,z)
-GLfloat RECTANGLE[] = 
-{   // Positions             // Colors
-    -1.0f, -1.0f, 0.0f,     //1.0f, 0.0f, 0.0f,   // Bottom left
-     1.0f, -1.0f, 0.0f,     //0.0f, 1.0f, 0.0f,   // Bottom right
-     1.0f,  1.0f, 0.0f,     //0.0f, 0.0f, 1.0f,   // Top right
-    -1.0f,  1.0f, 0.0f,     //1.0f, 0.0f, 1.0f,   // Top left
+// Float array for cube, each point has 3 coordinated (x,y,z)
+float vertices[] = {
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    -0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
 };
 
-GLfloat COLORS[] =
+GLfloat texture[] =
 {
-    1.0f, 0.0f, 0.0f,   // Red
-    0.0f, 1.0f, 0.0f,   // Green
-    0.0f, 0.0f, 1.0f,   // Blue
-    1.0f, 0.0f, 1.0f,   // Red + Blue
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f,
+    1.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 1.0f,
+    0.0f, 1.0f,
+    1.0f, 1.0f,
+    1.0f, 0.0f,
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 1.0f
 };
 
-GLfloat TEXTURE[] =
-{
-    0.0f, 0.0f,     // Bottom left
-    0.0f, 1.0f,     // Top left
-    1.0f, 1.0f,     // Top right
-    1.0f, 0.0f,     // Bottom right
-};
-
-unsigned int INDICES[] = 
+unsigned int indices[] = 
 {
     0, 1, 2,    // First triangle (bottom left + bottom right + top right)
     0, 2, 3,    // Second triangle (bottom left + top right + top left)
+};
+
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f), 
+    glm::vec3( 2.0f,  5.0f, -15.0f), 
+    glm::vec3(-1.5f, -2.2f, -2.5f),  
+    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3( 2.4f, -0.4f, -3.5f),  
+    glm::vec3(-1.7f,  3.0f, -7.5f),  
+    glm::vec3( 1.3f, -2.0f, -2.5f),  
+    glm::vec3( 1.5f,  2.0f, -2.5f), 
+    glm::vec3( 1.5f,  0.2f, -1.5f), 
+    glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
 void processInput(GLFWwindow* window)
@@ -64,14 +141,14 @@ void processInput(GLFWwindow* window)
     // If user press up key button - increase scale
     if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         scaleValue += 0.01;
-        if((scaleValue) >= 1.0)
-            scaleValue = 0.1;
+        // if((scaleValue) >= 1.0)
+            // scaleValue = 0.1;
 
     // If user press down key button - decrease scale
     if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         scaleValue -= 0.01;
-        if(scaleValue <= 0)
-            scaleValue = 0.99;
+        // if(scaleValue <= 0)
+            // scaleValue = 0.99;
 
     // If user press right key button - rotate to right
     if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
@@ -119,15 +196,13 @@ int main()
     Shader shader(VERTEX_SHADER_PATH.c_str(), FRAGMENT_SHADER_PATH.c_str());
     
     // Create new Mesh object to handle triangle shape.
-    Mesh mesh(RECTANGLE, sizeof(RECTANGLE), COLORS, sizeof(COLORS), TEXTURE, sizeof(TEXTURE), INDICES, sizeof(INDICES), GL_FLOAT, false, 0);
+    Mesh mesh(vertices, sizeof(vertices), nullptr, 0, texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
     // Initialise VAO (vertex array object) and VBO (vertex buffer object) for mesh
     mesh.initialise(GL_FLOAT, GL_FALSE);
     // Add indices (elements) attribute to mesh
-    mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, INDICES, sizeof(INDICES), &mesh.elementBuffer);
-    // Add color attribute to mesh
-    mesh.addAttribute(1, GL_ARRAY_BUFFER, 3, GL_FLOAT, GL_FALSE, COLORS, sizeof(COLORS), &mesh.colorBuffer);
+    mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, indices, sizeof(indices), &mesh.elementBuffer);
     // Add texture attribute to mesh
-    mesh.addAttribute(2, GL_ARRAY_BUFFER, 2, GL_FLOAT, GL_FALSE, TEXTURE, sizeof(TEXTURE), &mesh.textureBuffer);
+    mesh.addAttribute(1, GL_ARRAY_BUFFER, 2, GL_FLOAT, GL_FALSE, texture, sizeof(texture), &mesh.textureBuffer);
     // Unbind mesh from global state
     mesh.unbind();
 
@@ -148,6 +223,9 @@ int main()
     // Use shader program before setting uniforms
     shader.use();
 
+    // Tell OpenGL to enable depth buffer
+    shader.enableDepth();
+
     // Set uniform sampler2D "texture1" to texture unit 0
     shader.setInt("texture1", 0);
     // Set uniform sampler2D "texture1" to texture unit 1
@@ -163,29 +241,49 @@ int main()
 
         // Clear window to black screen
         glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // Clear color buffer and depth buffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Tranformation matrix
-        // Creating new 4x4 matrix with all zeroes except the diagonal which equals 1
-        transform = glm::mat4(1.0f);
-        transform = glm::translate(transform, translationVec);
-        // Applying scaling to transformation matrix
-        transform = glm::scale(transform, glm::vec3(scaleValue));
-        // Applying rotation to transformation matrix
-        transform = glm::rotate(transform, glm::radians(rotationValue), glm::vec3(0.0, 0.0, 1.0));
-        // Setting transformation matrix in shader program
-        shader.setMatrix4fv("transform", glm::value_ptr(transform));
+        // Iterate over objects locations (vec3 array)
+        for(unsigned int i = 0; i < 10; i++)
+        {
+            // Create new 4x4 diagonal matrix that equals 1
+            model = glm::mat4(1.0f);
+            // Translate model's location according to "cubePositions" at index i
+            model = glm::translate(model, cubePositions[i]);
+            // Angle variable for model's rotation
+            float angle;
+            // Vector 3 (x,y,z) to specify the effect of the rotation on each of the axes
+            glm::vec3 rotationVec;
+            // If index devides by 2
+            if(i % 2 == 0)
+            {
+                angle = glfwGetTime() * 15.0f * (i + 1);
+                rotationVec = glm::vec3(1.0f, 0.5f, 0.2f);
+            }
+            // If index devides by 3
+            if(i % 3 == 0)
+            {
+                angle = glfwGetTime() * 25.0f * (i + 1);
+                rotationVec = glm::vec3(0.5f, 1.0f, 0.2f);
+            }
+            // Rotate model according to angle and rotation vector
+            model = glm::rotate(model, glm::radians(angle), rotationVec);
+            // Update uniform matrix in shader program
+            shader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+            // Render model
+            mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+        }
+
+        view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        shader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+
+        projection = glm::perspective(glm::radians(45.0f), WIDTH / HEIGHT, 0.1f, 100.0f);
+        shader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
 
         // Render triangle
-        mesh.render(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        // Uncomment to render second container with smiley face :)
-        // transform = glm::mat4(1.0f);
-        // transform = glm::translate(transform, glm::vec3(-0.3f, 0.3f, 0.0f));
-        // transform = glm::scale(transform, glm::vec3(scaleValue));
-        // transform = glm::rotate(transform, glm::radians(rotationValue), glm::vec3(0.0, 0.0, 1.0));
-        // shader.setMatrix4fv("transform", &transform[0][0]);
-        // mesh.copy(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
         mesh.unbind();
 
@@ -198,6 +296,7 @@ int main()
         // Get + Handle glfwWindow I/O
         glfwPollEvents();
     }
+    
     mesh.clear();
     shader.unbind();
     shader.clear();
