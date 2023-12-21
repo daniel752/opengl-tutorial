@@ -34,16 +34,16 @@ std::string Shader::readFile(std::string filename)
     return buffer.str();
 }
 
-void Shader::loadTexture(std::string filename, GLuint *texture, GLenum target, GLint level, GLint internalFormat, GLint border, GLint format, GLenum type)
+void Shader::loadTexture(std::string filename, GLuint *texture, GLenum target, GLenum textureParam, GLenum filterParam, GLint level, GLint internalFormat, GLint border, GLint format, GLenum type)
 {
     glGenTextures(1, texture);
     glBindTexture(target, *texture);
     // set the texture wrapping parameters
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, textureParam);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, textureParam);
     // set texture filtering parameters
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterParam);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterParam);
 
     
     // stbi_set_flip_vertically_on_load(true);

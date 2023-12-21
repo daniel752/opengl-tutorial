@@ -50,7 +50,7 @@ public:
      * @param format Specifies the format of pixel data from texture image.
      * @param type Specifies the data type of pixel data from texture image.
     */
-    void loadTexture(std::string filename, GLuint *texture, GLenum target, GLint level, GLint internalFormat, GLint border, GLint format, GLenum type);
+    void loadTexture(std::string filename, GLuint *texture, GLenum target, GLenum textureParam, GLenum filterParam, GLint level, GLint internalFormat, GLint border, GLint format, GLenum type);
     
     /**
      * @brief Use this object's shader program.
