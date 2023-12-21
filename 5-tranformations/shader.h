@@ -11,6 +11,10 @@
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 /**
  * @brief Class Shader handles all shader program operations such as reading shaders from files, compiling shaders, and creating new shader program.
@@ -64,6 +68,7 @@ public:
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
     void setFloat(const std::string& name, float value) const;
+    void setMatrix4fv(const std::string& name, GLfloat *value) const;
 
 private:
     GLuint ID; // Holds shader program ID
