@@ -33,7 +33,7 @@ float deltaTime = 0;
 float lastFrame = 0;
 const float cameraSpeed = 1.0;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), 45.0f);
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 bool firstMouse = true;
 float lastX = WIDTH / 2.0f;
@@ -143,29 +143,27 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
-void processInput(GLFWwindow* window, Camera* camera)
+void processInput(GLFWwindow* window)
 {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    float speed = cameraSpeed * deltaTime;
-
     // If user press "W" key button - move up the y axis
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera->move(speed * camera->getFront());
+        camera.processKeyboard(FORWARD, deltaTime);
 
     // If user press "S" key button - move down the y axis
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera->move(-speed * camera->getFront());
+        camera.processKeyboard(BACKWARD, deltaTime);
 
     // If user press "A" key button - move up x axis (move right)
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera->move(glm::normalize(glm::cross(camera->getFront(), camera->getUp())) * -speed);
+        camera.processKeyboard(LEFT, deltaTime);
 
     // If user press "D" key button - move down x axis (move left)
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera->move(glm::normalize(glm::cross(camera->getFront(), camera->getUp())) * speed);
+        camera.processKeyboard(RIGHT, deltaTime);
 }
 
 int main()
@@ -222,7 +220,7 @@ int main()
     // Run until window should close
     while (!window.isShouldClose())
     {
-        processInput(window.getGlWindow(), &camera);
+        processInput(window.getGlWindow());
         // window.processInput(GLFW_KEY_UP, &mixValue, 0.01f);
         // window.processInput(GLFW_KEY_DOWN, &mixValue, -0.01f);
 
@@ -231,7 +229,7 @@ int main()
         // Clear color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        view = camera.lookAt(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
+        view = camera.getViewMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
         shader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
 
         // Iterate over objects locations (vec3 array)
@@ -305,34 +303,10 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    float sensitivity = 0.2f;
-    xOffset *= sensitivity;
-    yOffset *= sensitivity;
-
-    float yaw = xOffset + camera.getYaw();
-    float pitch = yOffset + camera.getPitch();
-    
-    if(pitch > 89.0)
-        pitch = 89.0;
-    if(pitch < -89.0)
-        pitch = -89.0;
-
-    camera.setYaw(yaw);
-    camera.setPitch(pitch);
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    
-    camera.setFront(glm::normalize(front));
+    camera.processMouseMovement(xOffset, yOffset, true);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    float fov = camera.getFov() - yoffset;
-    if(fov < 1.0f)
-        fov = 1.0f;
-    if(fov > 45.0f)
-        fov = 45.0f;
+    camera.processMouseScroll(yoffset);
 }
