@@ -31,7 +31,6 @@ glm::vec3 translationVec(0.0f);
 
 float deltaTime = 0;
 float lastFrame = 0;
-const float cameraSpeed = 1.0;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -164,6 +163,14 @@ void processInput(GLFWwindow* window)
     // If user press "D" key button - move down x axis (move left)
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.processKeyboard(RIGHT, deltaTime);
+
+    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.setMovementSpeed(SPEED * 5.0f);
+    else
+        camera.setMovementSpeed(SPEED);
+
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        exit(0);
 }
 
 int main()
@@ -176,6 +183,7 @@ int main()
 
     glfwSetInputMode(window.getGlWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window.getGlWindow(), mouse_callback);
+    glfwSetScrollCallback(window.getGlWindow(), scroll_callback);
 
     // Create new Mesh object to handle triangle shape.
     Mesh mesh(vertices, sizeof(vertices), nullptr, 0, texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
@@ -213,23 +221,23 @@ int main()
     // Set uniform sampler2D "texture1" to texture unit 1
     shader.setInt("texture2", 1);
 
-    projection = glm::perspective(glm::radians(45.0f), WIDTH / HEIGHT, 0.1f, 100.0f);
-    shader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
-
     // Main loop
     // Run until window should close
     while (!window.isShouldClose())
     {
         processInput(window.getGlWindow());
-        // window.processInput(GLFW_KEY_UP, &mixValue, 0.01f);
-        // window.processInput(GLFW_KEY_DOWN, &mixValue, -0.01f);
 
         // Clear window to black screen
         glClearColor(0, 0, 0, 1);
         // Clear color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        view = camera.getViewMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
+        // Set perspective projection matrix
+        projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
+        shader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
+
+        // Set view matrix
+        view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
         shader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
 
         // Iterate over objects locations (vec3 array)
@@ -308,5 +316,5 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.processMouseScroll(yoffset);
+    camera.processMouseScroll(static_cast<float>(yoffset));
 }
