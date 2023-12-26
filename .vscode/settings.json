@@ -8,6 +8,8 @@
     "files.associations": 
     {
       "*.glsl": "glsl",
+      "*.vs": "glsl",
+      "*.fs": "glsl",
       "fstream": "cpp",
       "chrono": "cpp",
       "array": "cpp",
