@@ -45,14 +45,18 @@ glm::mat4 projection;
 // Translation (location/movement) vector 3 (x,y,z) to move object
 glm::vec3 translationVec(0.0f);
 
-float deltaTime = 0;
-float lastFrame = 0;
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 bool firstMouse = true;
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
+
+float ambientStrength = 0.1f;
+float lightStrength = 0.1f;
+float specularIntensity = 32;
 
 // Float array for cube, each point has 3 coordinated (x,y,z)
 float vertices[] = {
@@ -164,43 +168,74 @@ void processInput(GLFWwindow* window)
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    // If user press "W" key button - move up the y axis
+    // If user presses "W" key button - move up the y axis
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.processKeyboard(FORWARD, deltaTime);
 
-    // If user press "S" key button - move down the y axis
+    // If user presses "S" key button - move down the y axis
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         camera.processKeyboard(BACKWARD, deltaTime);
 
-    // If user press "A" key button - move up x axis (move right)
+    // If user presses "A" key button - move up x axis (move right)
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.processKeyboard(LEFT, deltaTime);
 
-    // If user press "D" key button - move down x axis (move left)
+    // If user presses "D" key button - move down x axis (move left)
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.processKeyboard(RIGHT, deltaTime);
-
+    
+    // If user presses UP key button - increase lighting on objects
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        // A Cheap trick to create a more real lighting
+        // The light will always be a little brighter then objects
+        lightStrength += 0.01;
+        ambientStrength += 0.01f;
+        if(lightStrength > 1.0f)
+            lightStrength = 1.0f;
+        if(ambientStrength > 1.0f)
+            ambientStrength = 1.0f;
+        // lightStrength = ambientStrength + 0.2;
+    }
+    // If user presse DOWN key button - decrease lighting on objects
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        lightStrength -= 0.01f;
+        ambientStrength -= 0.01f;
+        if(lightStrength <= 0.0f)
+            lightStrength = 0.0f;
+        if(ambientStrength <= 0.0f)
+            ambientStrength = 0.0f;
+        // lightStrength = ambientStrength + 0.2;
+    }
+    // If user presses LEFT_SHIFT key button - increase camera movement
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.setMovementSpeed(SPEED * 5.0f);
+    // Otherwise normal camera speed
     else
         camera.setMovementSpeed(SPEED);
 
+    // If user presses ESC key button - exit program
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         exit(0);
 }
 
 int main()
 {
+    // Create window object
     glWindow window(TITLE, WIDTH, HEIGHT);
+
+    // Set callback function to capture cursor (focus on window)
+    glfwSetInputMode(window.getGlWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // Set callback function to capture mouse movement
+    glfwSetCursorPosCallback(window.getGlWindow(), mouse_callback);
+    // Set callback function to capture mouse scrolling
+    glfwSetScrollCallback(window.getGlWindow(), scroll_callback);
 
     // Setup Shaders
     // Create new colorShader object from colorShader files and compile colorShader program
     Shader colorShader(COLOR_V_SHADER_PATH.c_str(), COLOR_F_SHADER_PATH.c_str());
     Shader lightShader(LIGHT_V_SHADER_PATH.c_str(), LIGHT_F_SHADER_PATH.c_str());
-
-    glfwSetInputMode(window.getGlWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window.getGlWindow(), mouse_callback);
-    glfwSetScrollCallback(window.getGlWindow(), scroll_callback);
 
     // Create new Mesh object
     Mesh mesh(0, vertices, sizeof(vertices), nullptr, 0, texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
@@ -223,6 +258,7 @@ int main()
     // Tell OpenGL to enable depth buffer
     colorShader.enableDepth();
 
+    // Use lightShader program before setting uniforms
     lightShader.use();
     lightShader.setVec3("color", glm::value_ptr(white));
 
@@ -236,14 +272,6 @@ int main()
         glClearColor(0, 0, 0, 1);
         // Clear color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // // Set perspective projection matrix
-        // projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
-        // colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
-
-        // // Set view matrix
-        // view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
-        // colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
 
         // Iterate over objects locations (vec3 array)
         for(unsigned int i = 0; i < 10; i++)
@@ -269,8 +297,11 @@ int main()
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+                // Set light object's rotation, for a light cube it will be 0
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+                // Set light object's light strength
+                lightShader.setFloat("strength", lightStrength);
             }
             else
             {
@@ -286,11 +317,11 @@ int main()
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+                colorShader.setVec3("lightPosition", glm::value_ptr(cubePositions[i]));
+                colorShader.setMatrix3fv("normalMatrix", 1, GL_FALSE, glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(model)))));
+                colorShader.setFloat("ambientStrength", ambientStrength);
+                colorShader.setFloat("specularIntensity", specularIntensity);
             }
-            // Rotate model according to angle and rotation vector
-            // model = glm::rotate(model, glm::radians(angle), rotationVec);
-            // // Update uniform matrix in colorShader program
-            // colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
             // Render model
             mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
         }
