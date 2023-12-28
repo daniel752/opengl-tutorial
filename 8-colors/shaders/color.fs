@@ -14,26 +14,19 @@ uniform float specularIntensity;
 
 void main()
 {
-    if(ambientStrength == 0) 
-    {
-        fragColor = vec4(0.0, 0.0, 0.0, 1.0f);
-    }
-    else
-    {
-        // Ambient light calculation
-        vec3 ambientLight = ambientStrength * lightColor;
-        // Diffuse light calculation
-        vec3 norm = normalize(normal);
-        vec3 lightDirection = normalize(lightPosition - fragPosition);
-        float diff = max(dot(norm, lightDirection), 0.0);
-        vec3 diffuseLight = diff * lightColor;
-        // Specular light calculation
-        vec3 viewDirection = normalize(viewPosition - fragPosition);
-        vec3 reflectedLightDirection = reflect(-lightDirection, norm);
-        float specularLight = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), specularIntensity);
-        // Final resulted light
-        vec3 result = (specularLight + diffuseLight + ambientLight) * objectColor;
-        // Set fragment color
-        fragColor = vec4(result, 1.0);
-    }
+    // Ambient light calculation
+    vec3 ambientLight = ambientStrength * lightColor;
+    // Diffuse light calculation
+    vec3 norm = normalize(normal);
+    vec3 lightDirection = normalize(lightPosition - fragPosition);
+    float diff = max(dot(norm, lightDirection), 0.0);
+    vec3 diffuseLight = diff * lightColor;
+    // Specular light calculation
+    vec3 viewDirection = normalize(viewPosition - fragPosition);
+    vec3 reflectedLightDirection = reflect(-lightDirection, norm);
+    float specularLight = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), specularIntensity);
+    // By mixing different light components with the object color we get the resulted object color with light
+    vec3 result = (specularLight + diffuseLight + ambientLight) * objectColor;
+    // Set fragment color
+    fragColor = vec4(result, 1.0);
 }

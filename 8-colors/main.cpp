@@ -11,19 +11,21 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // Define colors using glm::vec3
-glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
-glm::vec3 black = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
-glm::vec3 green = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 blue = glm::vec3(0.0f, 0.0f, 1.0f);
-glm::vec3 yellow = glm::vec3(1.0f, 1.0f, 0.0f);
-glm::vec3 magenta = glm::vec3(1.0f, 0.0f, 1.0f);
-glm::vec3 cyan = glm::vec3(0.0f, 1.0f, 1.0f);
-glm::vec3 gray = glm::vec3(0.5f, 0.5f, 0.5f);
-glm::vec3 orange = glm::vec3(1.0f, 0.5f, 0.0f);
-glm::vec3 lime = glm::vec3(0.5f, 1.0f, 0.0f);
-glm::vec3 royalBlue = glm::vec3(0.0f, 0.5f, 1.0f);
-
+glm::vec3 colors[] = 
+{
+    glm::vec3(1.0f, 1.0f, 1.0f),    // White
+    glm::vec3(0.0f, 0.0f, 0.0f),    // Black
+    glm::vec3(1.0f, 0.0f, 0.0f),    // Red
+    glm::vec3(0.0f, 1.0f, 0.0f),    // Green
+    glm::vec3(0.0f, 0.0f, 1.0f),    // Blue
+    glm::vec3(1.0f, 1.0f, 0.0f),    // Yellow
+    glm::vec3(1.0f, 0.0f, 1.0f),    // Magenta
+    glm::vec3(0.0f, 1.0f, 1.0f),    // Cyan
+    glm::vec3(0.5f, 0.5f, 0.5f),    // Grey
+    glm::vec3(1.0f, 0.5f, 0.0f),    // Orange
+    glm::vec3(0.5f, 1.0f, 0.0f),    // Lime
+    glm::vec3(0.0f, 0.5f, 1.0f)     // Royal blue
+};
 
 // Window dimensions
 GLfloat WIDTH = 800.0f, HEIGHT = 600.0f;
@@ -56,7 +58,7 @@ float lastY = HEIGHT / 2.0f;
 
 float ambientStrength = 0.1f;
 float lightStrength = 0.1f;
-float specularIntensity = 32;
+float specularIntensity = 64;
 
 // Float array for cube, each point has 3 coordinated (x,y,z)
 float vertices[] = {
@@ -150,13 +152,13 @@ unsigned int indices[] =
 };
 
 glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f), 
+    glm::vec3( 0.0f,  0.0f,  7.0f), 
     glm::vec3( 2.0f,  5.0f, -15.0f), 
     glm::vec3(-1.5f, -2.2f, -2.5f),  
-    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3(-3.8f, -2.0f, -20.3f),  
     glm::vec3( 2.4f, -0.4f, -3.5f),  
     glm::vec3(-1.7f,  3.0f, -7.5f),  
-    glm::vec3( 1.3f, -2.0f, -2.5f),  
+    glm::vec3( 1.3f, -2.0f, -15.5f),  
     glm::vec3( 1.5f,  2.0f, -2.5f), 
     glm::vec3( 1.5f,  0.2f, -1.5f), 
     glm::vec3(-1.3f,  1.0f, -1.5f)  
@@ -189,24 +191,24 @@ void processInput(GLFWwindow* window)
     {
         // A Cheap trick to create a more real lighting
         // The light will always be a little brighter then objects
+        ambientStrength += 0.01;
         lightStrength += 0.01;
-        ambientStrength += 0.01f;
+        // ambientStrength += 0.01f;
         if(lightStrength > 1.0f)
             lightStrength = 1.0f;
-        if(ambientStrength > 1.0f)
-            ambientStrength = 1.0f;
-        // lightStrength = ambientStrength + 0.2;
+        if(ambientStrength > 0.8f)
+            ambientStrength = 0.8f;
     }
     // If user presse DOWN key button - decrease lighting on objects
     if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
-        lightStrength -= 0.01f;
         ambientStrength -= 0.01f;
+        lightStrength -= 0.01f;
+        // ambientStrength -= 0.01f;
         if(lightStrength <= 0.0f)
             lightStrength = 0.0f;
-        if(ambientStrength <= 0.0f)
-            ambientStrength = 0.0f;
-        // lightStrength = ambientStrength + 0.2;
+        // if(ambientStrength <= 0.0f)
+            // ambientStrength = 0.0f;
     }
     // If user presses LEFT_SHIFT key button - increase camera movement
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -253,14 +255,13 @@ int main()
 
     // Use colorShader program before setting uniforms
     colorShader.use();
-    colorShader.setVec3("objectColor", glm::value_ptr(blue));
-    colorShader.setVec3("lightColor", glm::value_ptr(white));
+    colorShader.setVec3("lightColor", glm::value_ptr(colors[0]));
     // Tell OpenGL to enable depth buffer
     colorShader.enableDepth();
 
     // Use lightShader program before setting uniforms
     lightShader.use();
-    lightShader.setVec3("color", glm::value_ptr(white));
+    lightShader.setVec3("color", glm::value_ptr(colors[0]));
 
     // Main loop
     // Run until window should close
@@ -284,12 +285,11 @@ int main()
             float angle;
             // Vector 3 (x,y,z) to specify the effect of the rotation on each of the axes
             glm::vec3 rotationVec;
-            int moduloVal = 6;
+            unsigned int moduloVal = 6;
+            unsigned int lightCubeLocationIndex = 0;
             // If index devides by 3, cube will be a light source
-            if(i % 3 == 0)
+            if(i == lightCubeLocationIndex)
             {
-                angle = 0;
-                rotationVec = glm::vec3(0.5f, 1.0f, 0.2f);
                 lightShader.use();
                 // Set perspective projection matrix
                 projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
@@ -298,17 +298,17 @@ int main()
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
                 // Set light object's rotation, for a light cube it will be 0
-                model = glm::rotate(model, glm::radians(angle), rotationVec);
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
                 // Set light object's light strength
                 lightShader.setFloat("strength", lightStrength);
             }
             else
             {
-                angle = glfwGetTime() * 15.0f * ((i + 1) % moduloVal + 1);
+                angle = glfwGetTime() * 15.0f * (((i + 1) % moduloVal) + 1);
                 rotationVec = glm::vec3(1.0f, 0.5f, 0.2f);
                 // Update uniform matrix in colorShader program
                 colorShader.use();
+                colorShader.setVec3("objectColor", glm::value_ptr(colors[i]));
                 // Set perspective projection matrix
                 projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
                 colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
@@ -317,8 +317,8 @@ int main()
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
-                colorShader.setVec3("lightPosition", glm::value_ptr(cubePositions[i]));
-                colorShader.setMatrix3fv("normalMatrix", 1, GL_FALSE, glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(model)))));
+                colorShader.setVec3("lightPosition", glm::value_ptr(cubePositions[lightCubeLocationIndex]));
+                colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
                 colorShader.setFloat("ambientStrength", ambientStrength);
                 colorShader.setFloat("specularIntensity", specularIntensity);
             }
