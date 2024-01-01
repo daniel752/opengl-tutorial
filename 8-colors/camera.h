@@ -119,10 +119,10 @@ public:
     float getPitch() { return pitch; };
 
     void setMovementSpeed(float movementSpeed) { this->movementSpeed = movementSpeed; };
-    float getMovementSpeed() { return movementSpeed; };
+    float getMovementSpeed() const { return movementSpeed; };
 
     void setMouseSensitivity(float mouseSensitivity) { this->mouseSensitivity = mouseSensitivity; };
-    float getMouseSensitivity() { return mouseSensitivity; };
+    float getMouseSensitivity() const { return mouseSensitivity; };
 
     void setFov(float fov) { this->fov = fov; };
     float getFov() { return fov; };

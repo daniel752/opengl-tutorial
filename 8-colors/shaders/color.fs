@@ -2,12 +2,15 @@
 
 in vec3 normal;
 in vec3 fragPosition;
+// Comment this line to switch to Phong lighting in world space
+in vec3 lightPosition;
 
 out vec4 fragColor;
 
 uniform vec3 objectColor;
 uniform vec3 lightColor;
-uniform vec3 lightPosition;
+// Uncomment this line to switch to Phong lighting in world space
+// uniform vec3 lightPosition;
 uniform vec3 viewPosition;
 uniform float ambientStrength;
 uniform float specularIntensity;

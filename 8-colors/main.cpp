@@ -317,7 +317,9 @@ int main()
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+                // Set light source location in space
                 colorShader.setVec3("lightPosition", glm::value_ptr(cubePositions[lightCubeLocationIndex]));
+                // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
                 colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
                 colorShader.setFloat("ambientStrength", ambientStrength);
                 colorShader.setFloat("specularIntensity", specularIntensity);
