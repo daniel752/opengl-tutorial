@@ -58,6 +58,7 @@ float lastY = HEIGHT / 2.0f;
 
 float ambientStrength = 0.1f;
 float lightStrength = 0.1f;
+float specularStrength = 0.1f;
 float specularIntensity = 64;
 
 // Float array for cube, each point has 3 coordinated (x,y,z)
@@ -193,11 +194,14 @@ void processInput(GLFWwindow* window)
         // The light will always be a little brighter then objects
         ambientStrength += 0.01;
         lightStrength += 0.01;
+        specularStrength += 0.01;
         // ambientStrength += 0.01f;
         if(lightStrength > 1.0f)
             lightStrength = 1.0f;
         if(ambientStrength > 0.8f)
             ambientStrength = 0.8f;
+        if(specularStrength > 1.0f)
+            specularStrength = 1.0f;
     }
     // If user presse DOWN key button - decrease lighting on objects
     if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
@@ -207,8 +211,10 @@ void processInput(GLFWwindow* window)
         // ambientStrength -= 0.01f;
         if(lightStrength <= 0.0f)
             lightStrength = 0.0f;
-        // if(ambientStrength <= 0.0f)
-            // ambientStrength = 0.0f;
+        if(ambientStrength <= 0.0f)
+            ambientStrength = 0.0f;
+        if(specularStrength <= 0.0f)
+            specularStrength = 0.0f;
     }
     // If user presses LEFT_SHIFT key button - increase camera movement
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -287,6 +293,7 @@ int main()
             glm::vec3 rotationVec;
             unsigned int moduloVal = 6;
             unsigned int lightCubeLocationIndex = 0;
+            glm::vec3 lightPosition;
             // If index devides by 3, cube will be a light source
             if(i == lightCubeLocationIndex)
             {
@@ -297,7 +304,8 @@ int main()
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
-                // Set light object's rotation, for a light cube it will be 0
+                lightPosition = glm::vec3(1.0f + sin(glfwGetTime()) * 2.0f, sin(glfwGetTime() / 2.0f), 0.0f);
+                model = glm::translate(model, lightPosition);
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
                 // Set light object's light strength
                 lightShader.setFloat("strength", lightStrength);
@@ -309,20 +317,21 @@ int main()
                 // Update uniform matrix in colorShader program
                 colorShader.use();
                 colorShader.setVec3("objectColor", glm::value_ptr(colors[i]));
+                // Set light source location in space
+                colorShader.setVec3("lightPos", glm::value_ptr(lightPosition));
+                // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
+                colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
+                colorShader.setFloat("ambientStrength", ambientStrength);
+                colorShader.setFloat("specularStrength", specularStrength);
+                colorShader.setFloat("specularIntensity", specularIntensity);
                 // Set perspective projection matrix
                 projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
                 colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
-                model = glm::rotate(model, glm::radians(angle), rotationVec);
+                // model = glm::rotate(model, glm::radians(angle), rotationVec);
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
-                // Set light source location in space
-                colorShader.setVec3("lightPosition", glm::value_ptr(cubePositions[lightCubeLocationIndex]));
-                // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
-                colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
-                colorShader.setFloat("ambientStrength", ambientStrength);
-                colorShader.setFloat("specularIntensity", specularIntensity);
             }
             // Render model
             mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);

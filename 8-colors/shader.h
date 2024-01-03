@@ -62,7 +62,7 @@ public:
     */
     void clear();
 
-    void enableDepth();
+    void static enableDepth();
 
     GLuint getID() const { return ID; }
 
