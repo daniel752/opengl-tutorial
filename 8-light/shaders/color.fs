@@ -11,7 +11,7 @@ uniform vec3 viewPosition;
 struct Material
 {
     sampler2D diffuse;
-    vec3 specular;
+    sampler2D specular;
     float shininess;
 };
 
@@ -41,7 +41,7 @@ void main()
     vec3 viewDirection = normalize(viewPosition - fragPosition);
     vec3 reflectedLightDirection = reflect(-lightDirection, norm);
     float specular = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
-    vec3 specularLight = (specular * material.specular) * material.shininess * light.specular;
+    vec3 specularLight = specular * light.specular * material.shininess * texture(material.specular, textureCoordinates).rgb;
     
     // By mixing different light components we get the Phong light model
     vec3 result = specularLight + diffuseLight + ambientLight;

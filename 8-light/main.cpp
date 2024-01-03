@@ -334,16 +334,15 @@ int main()
     // Unbind mesh from global state
     mesh.unbind();
 
-    GLuint texture;
+    GLuint diffuseMap, specularMap;
     colorShader.use();
     // Load texture to "texture" variable
-    colorShader.loadTexture(PWD + "/../../assets/container2.png", &texture, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
-    // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
-    glActiveTexture(GL_TEXTURE0);
-    // Bind "texture" to texture unit 0
-    glBindTexture(GL_TEXTURE0, texture);
+    colorShader.loadTexture(PWD + "/../../assets/container2.png", &diffuseMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
     // Make material's sampler2D to point to our texture at texture unit 0
     colorShader.setInt("material.diffuse", 0);
+
+    colorShader.loadTexture(PWD + "/../../assets/container2_specular.png", &specularMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+    colorShader.setInt("material.specular", 1);
     colorShader.unbind();
 
     // Create new Mesh object for light cube
@@ -438,6 +437,15 @@ int main()
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
                 // Set changes made to model
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+
+                // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
+                glActiveTexture(GL_TEXTURE0);
+                // Bind "diffuseMap" to texture unit 0
+                glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+                glActiveTexture(GL_TEXTURE1);
+                // Bind "specularMap" to texture unit 1
+                glBindTexture(GL_TEXTURE_2D, specularMap);
             }
             // Render model
             mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
