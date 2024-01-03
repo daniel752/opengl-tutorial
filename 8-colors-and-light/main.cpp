@@ -321,8 +321,8 @@ int main()
     Shader::enableDepth();
 
     // Use lightShader program before setting uniforms
-    // lightShader.use();
-    // lightShader.setVec3("color", glm::value_ptr(colors[0]));
+    lightShader.use();
+    lightShader.setVec3("color", glm::value_ptr(colors[0]));
 
     // Main loop
     // Run until window should close
@@ -363,7 +363,7 @@ int main()
                 model = glm::translate(model, lightPosition);
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
                 // Set light object's light strength
-                lightShader.setVec3("color", glm::value_ptr(colors[lightCubeIndex]));
+                // lightShader.setVec3("color", glm::value_ptr(colors[lightCubeIndex]));
                 lightShader.setFloat("strength", lightStrength);
             }
             else

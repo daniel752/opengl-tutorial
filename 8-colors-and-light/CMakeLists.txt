@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(colors)
+project(colors_and_light)
 
 add_executable(main.o main.cpp glWindow.cpp mesh.cpp shader.cpp camera.cpp stb_image.cpp)
 
