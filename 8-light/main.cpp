@@ -337,7 +337,7 @@ int main()
     GLuint texture;
     colorShader.use();
     // Load texture to "texture" variable
-    colorShader.loadTexture(PWD + "/../../assets/container2.png", &texture, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGB, GL_UNSIGNED_BYTE);
+    colorShader.loadTexture(PWD + "/../../assets/container2.png", &texture, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
     // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
     glActiveTexture(GL_TEXTURE0);
     // Bind "texture" to texture unit 0
