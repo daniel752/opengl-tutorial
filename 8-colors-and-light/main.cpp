@@ -59,7 +59,7 @@ float lastY = HEIGHT / 2.0f;
 float ambientStrength = 0.1f;
 float lightStrength = 0.1f;
 float specularStrength = 0.1f;
-float specularIntensity = 64;
+float specularIntensity = 32;
 
 // Float array for cube, each point has 3 coordinated (x,y,z)
 float vertices[] = {
@@ -106,7 +106,58 @@ float vertices[] = {
     -0.5f,  0.5f, -0.5f,
 };
 
-GLfloat texture[] =
+float normals[] =
+{
+     // Negetive Z axis
+     0.0f, 0.0f, -1.0f,
+     0.0f, 0.0f, -1.0f,
+     0.0f, 0.0f, -1.0f,
+     0.0f, 0.0f, -1.0f,
+     0.0f, 0.0f, -1.0f,
+     0.0f, 0.0f, -1.0f,
+
+     // Positive Z axis
+     0.0f, 0.0f,  1.0f,
+     0.0f, 0.0f,  1.0f,
+     0.0f, 0.0f,  1.0f,
+     0.0f, 0.0f,  1.0f,
+     0.0f, 0.0f,  1.0f,
+     0.0f, 0.0f,  1.0f,
+
+     // Negetive X axis
+    -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,
+    -1.0f, 0.0f,  0.0f,
+    
+     // Positive X axis
+     1.0f, 0.0f,  0.0f,
+     1.0f, 0.0f,  0.0f,
+     1.0f, 0.0f,  0.0f,
+     1.0f, 0.0f,  0.0f,
+     1.0f, 0.0f,  0.0f,
+     1.0f, 0.0f,  0.0f,
+
+     // Negetive Y axis
+     0.0f, -1.0f, 0.0f,
+     0.0f, -1.0f, 0.0f,
+     0.0f, -1.0f, 0.0f,
+     0.0f, -1.0f, 0.0f,
+     0.0f, -1.0f, 0.0f,
+     0.0f, -1.0f, 0.0f,
+
+     // Positive Y axis
+     0.0f,  1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+};
+
+float texture[] =
 {
     0.0f, 0.0f,
     1.0f, 0.0f,
@@ -192,29 +243,29 @@ void processInput(GLFWwindow* window)
     {
         // A Cheap trick to create a more real lighting
         // The light will always be a little brighter then objects
-        ambientStrength += 0.01;
+        // ambientStrength += 0.01;
         lightStrength += 0.01;
-        specularStrength += 0.01;
+        // specularStrength += 0.01;
         // ambientStrength += 0.01f;
         if(lightStrength > 1.0f)
             lightStrength = 1.0f;
-        if(ambientStrength > 0.8f)
-            ambientStrength = 0.8f;
-        if(specularStrength > 1.0f)
-            specularStrength = 1.0f;
+        // if(ambientStrength > 0.8f)
+            // ambientStrength = 0.8f;
+        // if(specularStrength > 1.0f)
+            // specularStrength = 1.0f;
     }
     // If user presse DOWN key button - decrease lighting on objects
     if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
-        ambientStrength -= 0.01f;
+        // ambientStrength -= 0.01f;
         lightStrength -= 0.01f;
         // ambientStrength -= 0.01f;
         if(lightStrength <= 0.0f)
             lightStrength = 0.0f;
-        if(ambientStrength <= 0.0f)
-            ambientStrength = 0.0f;
-        if(specularStrength <= 0.0f)
-            specularStrength = 0.0f;
+        // if(ambientStrength <= 0.0f)
+            // ambientStrength = 0.0f;
+        // if(specularStrength <= 0.0f)
+            // specularStrength = 0.0f;
     }
     // If user presses LEFT_SHIFT key button - increase camera movement
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -246,28 +297,32 @@ int main()
     Shader lightShader(LIGHT_V_SHADER_PATH.c_str(), LIGHT_F_SHADER_PATH.c_str());
 
     // Create new Mesh object
-    Mesh mesh(0, vertices, sizeof(vertices), nullptr, 0, texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
+    // Mesh mesh(0, vertices, sizeof(vertices), nullptr, 0, texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
+    Mesh mesh(0, vertices, sizeof(vertices), GL_FLOAT, false, 0);
+    mesh.setNormals(normals);
+    mesh.setIndices(indices, sizeof(indices));
+    mesh.setTextureCoordinates(texture, sizeof(texture));
     // Initialise VAO (vertex array object) and VBO (vertex buffer object) for mesh
     mesh.initialise(GL_FLOAT, GL_FALSE);
     // Add indices (elements) attribute to mesh
     mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, indices, sizeof(indices), &mesh.elementBuffer);
     // Add texture attribute to mesh
-    mesh.addAttribute(1, GL_ARRAY_BUFFER, 2, GL_FLOAT, GL_FALSE, texture, sizeof(texture), &mesh.textureBuffer);
+    mesh.addAttribute(1, GL_ARRAY_BUFFER, 3, GL_FLOAT, false, normals, sizeof(normals), &mesh.normalsBuffer);
     // Unbind mesh from global state
     mesh.unbind();
 
-    Mesh light(0, nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0, GL_FLOAT, false, 0);
+    Mesh light(0, nullptr, 0, GL_FLOAT, false, 0);
     light.initialise(GL_FLOAT, GL_FALSE);
 
     // Use colorShader program before setting uniforms
     colorShader.use();
-    colorShader.setVec3("lightColor", glm::value_ptr(colors[0]));
+    // colorShader.setVec3("lightColor", glm::value_ptr(colors[0]));
     // Tell OpenGL to enable depth buffer
-    colorShader.enableDepth();
+    Shader::enableDepth();
 
     // Use lightShader program before setting uniforms
-    lightShader.use();
-    lightShader.setVec3("color", glm::value_ptr(colors[0]));
+    // lightShader.use();
+    // lightShader.setVec3("color", glm::value_ptr(colors[0]));
 
     // Main loop
     // Run until window should close
@@ -292,10 +347,10 @@ int main()
             // Vector 3 (x,y,z) to specify the effect of the rotation on each of the axes
             glm::vec3 rotationVec;
             unsigned int moduloVal = 6;
-            unsigned int lightCubeLocationIndex = 0;
+            unsigned int lightCubeIndex = 0;
             glm::vec3 lightPosition;
             // If index devides by 3, cube will be a light source
-            if(i == lightCubeLocationIndex)
+            if(i == lightCubeIndex)
             {
                 lightShader.use();
                 // Set perspective projection matrix
@@ -308,6 +363,7 @@ int main()
                 model = glm::translate(model, lightPosition);
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
                 // Set light object's light strength
+                lightShader.setVec3("color", glm::value_ptr(colors[lightCubeIndex]));
                 lightShader.setFloat("strength", lightStrength);
             }
             else
@@ -317,28 +373,32 @@ int main()
                 // Update uniform matrix in colorShader program
                 colorShader.use();
                 colorShader.setVec3("objectColor", glm::value_ptr(colors[i]));
-                // Set light source location in space
-                colorShader.setVec3("lightPos", glm::value_ptr(lightPosition));
+                colorShader.setVec3("viewPosition", glm::value_ptr(camera.getPosition()));
+                colorShader.setVec3("light.position", glm::value_ptr(lightPosition));
+                colorShader.setVec3("light.ambient", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+                colorShader.setVec3("light.diffuse", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+                colorShader.setVec3("light.specular", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+
+                colorShader.setVec3("material.ambient", glm::value_ptr(glm::vec3(0.5) * colors[i] * lightStrength));
+                colorShader.setVec3("material.diffuse", glm::value_ptr(glm::vec3(0.8) * colors[i] * lightStrength));
+                colorShader.setVec3("material.specular", glm::value_ptr(glm::vec3(1.0) * colors[i] * lightStrength));
+                colorShader.setFloat("material.shininess", specularIntensity);
                 // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
                 colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
-                colorShader.setFloat("ambientStrength", ambientStrength);
-                colorShader.setFloat("specularStrength", specularStrength);
-                colorShader.setFloat("specularIntensity", specularIntensity);
                 // Set perspective projection matrix
                 projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
                 colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
-                // model = glm::rotate(model, glm::radians(angle), rotationVec);
+                model = glm::rotate(model, glm::radians(angle), rotationVec);
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
             }
             // Render model
             mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
         }
 
-        // Render triangle
-        mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+        // mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
         mesh.unbind();
 

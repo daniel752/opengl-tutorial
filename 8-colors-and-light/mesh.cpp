@@ -1,14 +1,14 @@
 #include "mesh.h"
 
-Mesh::Mesh(unsigned int index, GLfloat* vertices, int verticesSize, GLfloat* colors, int colorsSize, GLfloat* textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride) :
+Mesh::Mesh(unsigned int index, GLfloat *vertices, int verticesSize, GLenum type, bool normalize, GLsizei stride) :
     index(index),
     vertices(vertices), verticesSize(verticesSize), // Initialise vertices
-    colors(colors), colorsSize(colorsSize), // Initialise colors
-    textureCoordinates(textureCoordinates), textureCoordinatesSize(textureCoordinatesSize), // Initialise texture coordinates
-    indices(indices), indicesSize(indicesSize),  // Initialise indices (elements)
+    // colors(colors), colorsSize(colorsSize), // Initialise colors
+    // textureCoordinates(textureCoordinates), textureCoordinatesSize(textureCoordinatesSize), // Initialise texture coordinates
+    // indices(indices), indicesSize(indicesSize),  // Initialise indices (elements)
     vertexArray(0),
     vertexBuffer(0),
-    colorBuffer(0),
+    normalsBuffer(0),
     textureBuffer(0),
     elementBuffer(0)    
 {
@@ -19,7 +19,6 @@ Mesh::~Mesh()
 {
     clear();
     vertices = nullptr;
-    colors = nullptr;
     textureCoordinates = nullptr;
     indices = nullptr;
 }
@@ -104,10 +103,10 @@ void Mesh::clear()
         vertexBuffer = 0;
     }
 
-    if(colorBuffer != 0)
+    if(normalsBuffer != 0)
     {
-        glDeleteBuffers(1, &colorBuffer);
-        colorBuffer = 0;
+        glDeleteBuffers(1, &normalsBuffer);
+        normalsBuffer = 0;
     }
 
     if (textureBuffer != 0)
