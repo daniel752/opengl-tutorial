@@ -2,18 +2,15 @@
 
 in vec3 normal;
 in vec3 fragPosition;
-// Comment this line to switch to Phong lighting in world space
-// in vec3 lightPosition;
+in vec2 textureCoordinates;
 
 out vec4 fragColor;
 
-uniform vec3 objectColor;
 uniform vec3 viewPosition;
 
 struct Material
 {
-    vec3 ambient;
-    vec3 diffuse;
+    sampler2D diffuse;
     vec3 specular;
     float shininess;
 };
@@ -21,7 +18,6 @@ struct Material
 struct Light
 {
     vec3 position;
-
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
@@ -33,27 +29,22 @@ uniform Light light;
 void main()
 {
     // Ambient light calculation
-    vec3 ambientLight = material.ambient * light.ambient;
-    // vec3 ambientLight = ambientStrength * lightColor;
+    vec3 ambientLight = light.ambient * texture(material.diffuse, textureCoordinates).rgb;
 
     // Diffuse light calculation
     vec3 norm = normalize(normal);
     vec3 lightDirection = normalize(light.position -fragPosition);
-    // vec3 lightDirection = normalize(lightPosition - fragPosition);
     float diff = max(dot(norm, lightDirection), 0.0);
-    vec3 diffuseLight = (material.diffuse * diff) * light.diffuse;
-    // vec3 diffuseLight = (material.diffuse * diff) * lightColor;
+    vec3 diffuseLight = light.diffuse * diff * texture(material.diffuse, textureCoordinates).rgb;
 
     // Specular light calculation
     vec3 viewDirection = normalize(viewPosition - fragPosition);
-    // vec3 viewDirection = normalize(-fragPosition);
     vec3 reflectedLightDirection = reflect(-lightDirection, norm);
     float specular = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
     vec3 specularLight = (specular * material.specular) * material.shininess * light.specular;
     
-    // By mixing different light components with the object color we get the resulted object color with light
-    vec3 result = (specularLight + diffuseLight + ambientLight) * objectColor;
-    // vec3 result = specularLight + diffuseLight + ambientLight;
+    // By mixing different light components we get the Phong light model
+    vec3 result = specularLight + diffuseLight + ambientLight;
     // Set fragment color
     fragColor = vec4(result, 1.0);
 }

@@ -10,7 +10,7 @@
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// Define colors using glm::vec3
+// Array of colors
 glm::vec3 colors[] = 
 {
     glm::vec3(1.0f, 1.0f, 1.0f),    // White
@@ -29,14 +29,14 @@ glm::vec3 colors[] =
 
 // Window dimensions
 GLfloat WIDTH = 800.0f, HEIGHT = 600.0f;
-std::string TITLE = "Main Window";
+const std::string TITLE = "Main Window";
 // Working directory
 std::string PWD = std::filesystem::current_path().string();
 // Shader sources
-std::string COLOR_V_SHADER_PATH = PWD + "/../shaders/color.vs";
-std::string COLOR_F_SHADER_PATH = PWD + "/../shaders/color.fs";
-std::string LIGHT_V_SHADER_PATH = PWD + "/../shaders/light.vs";
-std::string LIGHT_F_SHADER_PATH = PWD + "/../shaders/light.fs";
+const std::string COLOR_V_SHADER_PATH = PWD + "/../shaders/color.vs";
+const std::string COLOR_F_SHADER_PATH = PWD + "/../shaders/color.fs";
+const std::string LIGHT_V_SHADER_PATH = PWD + "/../shaders/light.vs";
+const std::string LIGHT_F_SHADER_PATH = PWD + "/../shaders/light.fs";
 
 // Model transformation matrix
 glm::mat4 model;
@@ -50,6 +50,7 @@ glm::vec3 translationVec(0.0f);
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+// Create Camera object with starting location
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 bool firstMouse = true;
@@ -106,6 +107,10 @@ float vertices[] = {
     -0.5f,  0.5f, -0.5f,
 };
 
+// Float array to represent cube normals.
+// A Cube has 6 vertices on each face (Every square is made by triangle, so 2 triangles means 6 vertices)
+// so each 6 rows represent a face on the cube.
+// Each face has a different direction with it's normal vector.
 float normals[] =
 {
      // Negetive Z axis
@@ -157,6 +162,9 @@ float normals[] =
      0.0f,  1.0f, 0.0f,
 };
 
+// Float array for texture coordinates.
+// Texture coordinates are in 2D and that's why we have only two components (X,Y) for each vertex.
+// Texture coordinates start from bottom-left (0,0) of image.
 float texture[] =
 {
     0.0f, 0.0f,
@@ -203,6 +211,7 @@ unsigned int indices[] =
     0, 2, 3,    // Second triangle (bottom left + top right + top left)
 };
 
+// Vector 3 (X,Y,Z) array for cube positions in space
 glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  7.0f), 
     glm::vec3( 2.0f,  5.0f, -15.0f), 
@@ -216,6 +225,7 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
+// Function to handle user input from keyboard
 void processInput(GLFWwindow* window)
 {
     float currentFrame = glfwGetTime();
@@ -267,6 +277,18 @@ void processInput(GLFWwindow* window)
         // if(specularStrength <= 0.0f)
             // specularStrength = 0.0f;
     }
+    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    {
+        specularIntensity *= 2;
+        if(specularIntensity >= 256)
+            specularIntensity = 256;
+    }
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        specularIntensity /= 2;
+        if(specularIntensity <= 1)
+            specularIntensity = 1;
+    }
     // If user presses LEFT_SHIFT key button - increase camera movement
     if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.setMovementSpeed(SPEED * 5.0f);
@@ -296,8 +318,7 @@ int main()
     Shader colorShader(COLOR_V_SHADER_PATH.c_str(), COLOR_F_SHADER_PATH.c_str());
     Shader lightShader(LIGHT_V_SHADER_PATH.c_str(), LIGHT_F_SHADER_PATH.c_str());
 
-    // Create new Mesh object
-    // Mesh mesh(0, vertices, sizeof(vertices), nullptr, 0, texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
+    // Create new Mesh object for cubes
     Mesh mesh(0, vertices, sizeof(vertices), GL_FLOAT, false, 0);
     mesh.setNormals(normals);
     mesh.setIndices(indices, sizeof(indices));
@@ -306,22 +327,37 @@ int main()
     mesh.initialise(GL_FLOAT, GL_FALSE);
     // Add indices (elements) attribute to mesh
     mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, indices, sizeof(indices), &mesh.elementBuffer);
-    // Add texture attribute to mesh
+    // Add normals attribute to mesh
     mesh.addAttribute(1, GL_ARRAY_BUFFER, 3, GL_FLOAT, false, normals, sizeof(normals), &mesh.normalsBuffer);
+    // Add texture attribute to mesh
+    mesh.addAttribute(2, GL_ARRAY_BUFFER, 2, GL_FLOAT, false, texture, sizeof(texture), &mesh.textureBuffer);
     // Unbind mesh from global state
     mesh.unbind();
 
+    GLuint texture;
+    colorShader.use();
+    // Load texture to "texture" variable
+    colorShader.loadTexture(PWD + "/../../assets/container2.png", &texture, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGB, GL_UNSIGNED_BYTE);
+    // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
+    glActiveTexture(GL_TEXTURE0);
+    // Bind "texture" to texture unit 0
+    glBindTexture(GL_TEXTURE0, texture);
+    // Make material's sampler2D to point to our texture at texture unit 0
+    colorShader.setInt("material.diffuse", 0);
+    colorShader.unbind();
+
+    // Create new Mesh object for light cube
     Mesh light(0, nullptr, 0, GL_FLOAT, false, 0);
     light.initialise(GL_FLOAT, GL_FALSE);
 
     // Use colorShader program before setting uniforms
     colorShader.use();
-    // colorShader.setVec3("lightColor", glm::value_ptr(colors[0]));
-    // Tell OpenGL to enable depth buffer
+    // Tell OpenGL to enable depth buffer, so we be able to perceive depth
     Shader::enableDepth();
 
     // Use lightShader program before setting uniforms
     lightShader.use();
+    // Set light cube's color to white
     lightShader.setVec3("color", glm::value_ptr(colors[0]));
 
     // Main loop
@@ -359,29 +395,36 @@ int main()
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+                // Simple use of sin to make the light cube move around a bit
                 lightPosition = glm::vec3(1.0f + sin(glfwGetTime()) * 2.0f, sin(glfwGetTime() / 2.0f), 0.0f);
+                // Translate (move) light cube to updated position
                 model = glm::translate(model, lightPosition);
+                // Make light cube a fith (1/5) of it's normal size
+                model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+                // Set all changes made to model
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
                 // Set light object's light strength
-                // lightShader.setVec3("color", glm::value_ptr(colors[lightCubeIndex]));
                 lightShader.setFloat("strength", lightStrength);
             }
             else
             {
+                // Simple use of GLFW time function with modulo to have different angles to apply on the cubes
                 angle = glfwGetTime() * 15.0f * (((i + 1) % moduloVal) + 1);
+                // How much the rotation affects each axis, 1 is full effect and 0 is none
                 rotationVec = glm::vec3(1.0f, 0.5f, 0.2f);
                 // Update uniform matrix in colorShader program
                 colorShader.use();
-                colorShader.setVec3("objectColor", glm::value_ptr(colors[i]));
+                // Set light properties
                 colorShader.setVec3("viewPosition", glm::value_ptr(camera.getPosition()));
                 colorShader.setVec3("light.position", glm::value_ptr(lightPosition));
                 colorShader.setVec3("light.ambient", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
                 colorShader.setVec3("light.diffuse", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
                 colorShader.setVec3("light.specular", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
 
-                colorShader.setVec3("material.ambient", glm::value_ptr(glm::vec3(0.5) * colors[i] * lightStrength));
-                colorShader.setVec3("material.diffuse", glm::value_ptr(glm::vec3(0.8) * colors[i] * lightStrength));
-                colorShader.setVec3("material.specular", glm::value_ptr(glm::vec3(1.0) * colors[i] * lightStrength));
+                // Set material properties
+                colorShader.setVec3("material.ambient", glm::value_ptr(glm::vec3(0.5) * lightStrength));
+                colorShader.setVec3("material.diffuse", glm::value_ptr(glm::vec3(0.8) * lightStrength));
+                colorShader.setVec3("material.specular", glm::value_ptr(glm::vec3(1.0) * lightStrength));
                 colorShader.setFloat("material.shininess", specularIntensity);
                 // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
                 colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
@@ -391,7 +434,9 @@ int main()
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+                // Rotate cube
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
+                // Set changes made to model
                 colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
             }
             // Render model
