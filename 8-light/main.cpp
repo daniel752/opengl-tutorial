@@ -334,15 +334,23 @@ int main()
     // Unbind mesh from global state
     mesh.unbind();
 
-    GLuint diffuseMap, specularMap;
+    GLuint diffuseMap, specularMap, emissionMap;
     colorShader.use();
-    // Load texture to "texture" variable
+    // Load diffuse map texture
     colorShader.loadTexture(PWD + "/../../assets/container2.png", &diffuseMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
-    // Make material's sampler2D to point to our texture at texture unit 0
+    // Point material's diffuse to diffuse map at texture unit 0
     colorShader.setInt("material.diffuse", 0);
 
+    // Load specular map texture
     colorShader.loadTexture(PWD + "/../../assets/container2_specular.png", &specularMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+    // Point material's specular to specular map at texture unit 1
     colorShader.setInt("material.specular", 1);
+
+    // Load emission map texture
+    colorShader.loadTexture(PWD + "/../../assets/matrix.jpg", &emissionMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGB, 0, GL_RGB, GL_UNSIGNED_BYTE);
+    // Point material's emission to emission map at texture unit 2
+    colorShader.setInt("material.emission", 2);
+    // Unbind shader from global state
     colorShader.unbind();
 
     // Create new Mesh object for light cube
@@ -391,9 +399,11 @@ int main()
                 // Set perspective projection matrix
                 projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
                 lightShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
+
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+
                 // Simple use of sin to make the light cube move around a bit
                 lightPosition = glm::vec3(1.0f + sin(glfwGetTime()) * 2.0f, sin(glfwGetTime() / 2.0f), 0.0f);
                 // Translate (move) light cube to updated position
@@ -402,6 +412,7 @@ int main()
                 model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
                 // Set all changes made to model
                 lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+
                 // Set light object's light strength
                 lightShader.setFloat("strength", lightStrength);
             }
@@ -425,14 +436,18 @@ int main()
                 colorShader.setVec3("material.diffuse", glm::value_ptr(glm::vec3(0.8) * lightStrength));
                 colorShader.setVec3("material.specular", glm::value_ptr(glm::vec3(1.0) * lightStrength));
                 colorShader.setFloat("material.shininess", specularIntensity);
+
                 // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
                 colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
+
                 // Set perspective projection matrix
                 projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
                 colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
+
                 // Set view matrix
                 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
                 colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+
                 // Rotate cube
                 model = glm::rotate(model, glm::radians(angle), rotationVec);
                 // Set changes made to model
@@ -443,16 +458,21 @@ int main()
                 // Bind "diffuseMap" to texture unit 0
                 glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
+                // Set texture unit 1 active
                 glActiveTexture(GL_TEXTURE1);
                 // Bind "specularMap" to texture unit 1
                 glBindTexture(GL_TEXTURE_2D, specularMap);
+
+                // Set texture unit 2 active
+                glActiveTexture(GL_TEXTURE2);
+                // bind "emissionMap" to texture unit 2
+                glBindTexture(GL_TEXTURE_2D, emissionMap);
             }
             // Render model
             mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
         }
 
-        // mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
-
+        // Unbind mesh from global state
         mesh.unbind();
 
         // OpenGL uses a double buffer (front and back buffers) technique for rendering

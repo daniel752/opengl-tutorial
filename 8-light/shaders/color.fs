@@ -12,6 +12,7 @@ struct Material
 {
     sampler2D diffuse;
     sampler2D specular;
+    sampler2D emission;
     float shininess;
 };
 
@@ -33,7 +34,7 @@ void main()
 
     // Diffuse light calculation
     vec3 norm = normalize(normal);
-    vec3 lightDirection = normalize(light.position -fragPosition);
+    vec3 lightDirection = normalize(light.position - fragPosition);
     float diff = max(dot(norm, lightDirection), 0.0);
     vec3 diffuseLight = light.diffuse * diff * texture(material.diffuse, textureCoordinates).rgb;
 
@@ -42,9 +43,12 @@ void main()
     vec3 reflectedLightDirection = reflect(-lightDirection, norm);
     float specular = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
     vec3 specularLight = specular * light.specular * material.shininess * texture(material.specular, textureCoordinates).rgb;
+
+    // Emission light from object
+    vec3 emissionLight = texture(material.emission, textureCoordinates).rgb;
     
     // By mixing different light components we get the Phong light model
-    vec3 result = specularLight + diffuseLight + ambientLight;
+    vec3 result = specularLight + diffuseLight + ambientLight + emissionLight;
     // Set fragment color
     fragColor = vec4(result, 1.0);
 }
