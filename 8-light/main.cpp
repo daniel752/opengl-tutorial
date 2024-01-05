@@ -60,7 +60,7 @@ float lastY = HEIGHT / 2.0f;
 float ambientStrength = 0.1f;
 float lightStrength = 0.1f;
 float specularStrength = 0.1f;
-float specularIntensity = 32;
+float specularIntensity = 2;
 
 // Float array for cube, each point has 3 coordinated (x,y,z)
 float vertices[] = {
@@ -392,82 +392,88 @@ int main()
             unsigned int moduloVal = 6;
             unsigned int lightCubeIndex = 0;
             glm::vec3 lightPosition;
-            // If index devides by 3, cube will be a light source
-            if(i == lightCubeIndex)
-            {
-                lightShader.use();
-                // Set perspective projection matrix
-                projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
-                lightShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
+            // If cube is a light source
+            // if(i == lightCubeIndex)
+            // {
+                // lightShader.use();
+                // // Set perspective projection matrix
+                // projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
+                // lightShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
 
-                // Set view matrix
-                view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
-                lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+                // // Set view matrix
+                // view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
+                // lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
 
-                // Simple use of sin to make the light cube move around a bit
-                lightPosition = glm::vec3(1.0f + sin(glfwGetTime()) * 2.0f, sin(glfwGetTime() / 2.0f), 0.0f);
-                // Translate (move) light cube to updated position
-                model = glm::translate(model, lightPosition);
-                // Make light cube a fith (1/5) of it's normal size
-                model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-                // Set all changes made to model
-                lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+                // // Simple use of sin to make the light cube move around a bit
+                // lightPosition = glm::vec3(1.0f + sin(glfwGetTime()) * 2.0f, sin(glfwGetTime() / 2.0f), 0.0f);
+                // // Translate (move) light cube to updated position
+                // model = glm::translate(model, lightPosition);
+                // // Make light cube a fith (1/5) of it's normal size
+                // model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+                // // Set all changes made to model
+                // lightShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
 
-                // Set light object's light strength
-                lightShader.setFloat("strength", lightStrength);
-            }
-            else
-            {
-                // Simple use of GLFW time function with modulo to have different angles to apply on the cubes
-                angle = glfwGetTime() * 15.0f * (((i + 1) % moduloVal) + 1);
-                // How much the rotation affects each axis, 1 is full effect and 0 is none
-                rotationVec = glm::vec3(1.0f, 0.5f, 0.2f);
-                // Update uniform matrix in colorShader program
-                colorShader.use();
-                // Set light properties
-                colorShader.setVec3("viewPosition", glm::value_ptr(camera.getPosition()));
-                colorShader.setVec3("light.position", glm::value_ptr(lightPosition));
-                colorShader.setVec3("light.ambient", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
-                colorShader.setVec3("light.diffuse", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
-                colorShader.setVec3("light.specular", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+                // // Set light object's light strength
+                // lightShader.setFloat("strength", lightStrength);
+            // }
+            // else
+            // {
+            // Simple use of GLFW time function with modulo to have different angles to apply on the cubes
+            angle = glfwGetTime() * 15.0f * (((i + 1) % moduloVal) + 1);
+            // How much the rotation affects each axis, 1 is full effect and 0 is none
+            rotationVec = glm::vec3(1.0f, 0.5f, 0.2f);
+            // Update uniform matrix in colorShader program
+            colorShader.use();
+            // Set light properties
+            colorShader.setVec3("viewPosition", glm::value_ptr(camera.getPosition()));
+            colorShader.setVec3("light.position", glm::value_ptr(camera.getPosition()));
+            colorShader.setVec3("light.direction", glm::value_ptr(glm::vec3(camera.getFront().x, camera.getFront().y, camera.getFront().z)));
+            colorShader.setVec3("light.ambient", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+            colorShader.setVec3("light.diffuse", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+            colorShader.setVec3("light.specular", glm::value_ptr(glm::vec3(1.0f) * lightStrength));
+            colorShader.setFloat("light.costant", 1.0f);
+            colorShader.setFloat("light.linear", 0.09f);
+            colorShader.setFloat("light.quadratic", 0.032f);
+            colorShader.setFloat("light.cutOff", glm::cos(glm::radians(15.0f)));
+            colorShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
-                // Set material properties
-                colorShader.setVec3("material.ambient", glm::value_ptr(glm::vec3(0.5) * lightStrength));
-                colorShader.setVec3("material.diffuse", glm::value_ptr(glm::vec3(0.8) * lightStrength));
-                colorShader.setVec3("material.specular", glm::value_ptr(glm::vec3(1.0) * lightStrength));
-                colorShader.setFloat("material.shininess", specularIntensity);
+            // Set material properties
+            colorShader.setVec3("material.ambient", glm::value_ptr(glm::vec3(0.5) * lightStrength));
+            colorShader.setVec3("material.diffuse", glm::value_ptr(glm::vec3(0.8) * lightStrength));
+            colorShader.setVec3("material.specular", glm::value_ptr(glm::vec3(1.0) * lightStrength));
+            colorShader.setFloat("material.shininess", specularIntensity);
 
-                // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
-                colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
+            // Calculate and set object normal vector so we can calculate in shader how much the light hits the object
+            colorShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::value_ptr(glm::mat3(glm::inverse(model))));
 
-                // Set perspective projection matrix
-                projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
-                colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
+            // Set perspective projection matrix
+            projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
+            colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
 
-                // Set view matrix
-                view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
-                colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
+            // Set view matrix
+            view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
+            colorShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
 
-                // Rotate cube
-                model = glm::rotate(model, glm::radians(angle), rotationVec);
-                // Set changes made to model
-                colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
+            // Rotate cube
+            model = glm::rotate(model, glm::radians(angle), rotationVec);
+            // Set changes made to model
+            colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
 
-                // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
-                glActiveTexture(GL_TEXTURE0);
-                // Bind "diffuseMap" to texture unit 0
-                glBindTexture(GL_TEXTURE_2D, diffuseMap);
+            // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
+            glActiveTexture(GL_TEXTURE0);
+            // Bind "diffuseMap" to texture unit 0
+            glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
-                // Set texture unit 1 active
-                glActiveTexture(GL_TEXTURE1);
-                // Bind "specularMap" to texture unit 1
-                glBindTexture(GL_TEXTURE_2D, specularMap);
+            // Set texture unit 1 active
+            glActiveTexture(GL_TEXTURE1);
+            // Bind "specularMap" to texture unit 1
+            glBindTexture(GL_TEXTURE_2D, specularMap);
 
-                // Set texture unit 2 active
-                glActiveTexture(GL_TEXTURE2);
-                // bind "emissionMap" to texture unit 2
-                glBindTexture(GL_TEXTURE_2D, emissionMap);
-            }
+            // Set texture unit 2 active
+            glActiveTexture(GL_TEXTURE2);
+            // bind "emissionMap" to texture unit 2
+            glBindTexture(GL_TEXTURE_2D, emissionMap);
+            // }
             // Render model
             mesh.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
         }
