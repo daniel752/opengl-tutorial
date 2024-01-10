@@ -85,18 +85,18 @@ vec3 calculateDirectionLight(DirectionalLight directionalLight, vec3 normal, vec
 {
     vec3 lightDirection = normalize(-directionalLight.direction);
     // Ambient light calculation
-    vec3 ambientLight = directionalLight.ambient * texture(material.diffuse, textureCoordinates).rgb;
+    vec3 ambientLight = directionalLight.ambient * vec3(texture(material.diffuse, textureCoordinates));
 
     // Diffuse light calculation
     vec3 norm = normalize(normal);
     float diff = max(dot(norm, lightDirection), 0.0);
-    vec3 diffuseLight = directionalLight.diffuse * diff * texture(material.diffuse, textureCoordinates).rgb;
+    vec3 diffuseLight = directionalLight.diffuse * diff * vec3(texture(material.diffuse, textureCoordinates));
 
     vec3 reflectedLightDirection = reflect(-directionalLight.direction, norm);
     float specular = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
     vec3 specularLight = specular * directionalLight.specular * vec3(texture(material.specular, textureCoordinates));
 
-    return (ambientLight * diffuseLight * specularLight);
+    return (ambientLight + diffuseLight + specularLight);
 }
 
 vec3 calculatePointLight(PointLight pointLight, vec3 normal, vec3 fragPosition, vec3 viewDirection)
@@ -120,7 +120,7 @@ vec3 calculatePointLight(PointLight pointLight, vec3 normal, vec3 fragPosition, 
     diffuseLight *= attenuation;
     specularLight *= attenuation;
 
-    return (ambientLight * diffuseLight * specularLight);
+    return (ambientLight + diffuseLight + specularLight);
 }
 
 vec3 calculateSpotLight(SpotLight spotLight, vec3 normal, vec3 fragPosition, vec3 viewDirection)
@@ -137,19 +137,22 @@ vec3 calculateSpotLight(SpotLight spotLight, vec3 normal, vec3 fragPosition, vec
     float specular = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
     vec3 specularLight = specular * spotLight.specular * vec3(texture(material.specular, textureCoordinates));
 
-    float theta = dot(lightDirection, normalize(-spotLight.direction));
-    float epsilon = (spotLight.cutOff - spotLight.outerCutOff);
-    float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
+    if(spotLight.cutOff > 0)
+    {
+        float theta = dot(lightDirection, normalize(-spotLight.direction));
+        float epsilon = (spotLight.cutOff - spotLight.outerCutOff);
+        float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
 
-    diffuseLight *= intensity;
-    specularLight *= intensity;
+        diffuseLight *= intensity;
+        specularLight *= intensity;
 
-    float distance = length(spotLight.position - fragPosition);
-    float attenuation = 1.0 / (spotLight.constant + (spotLight.linear * distance) + spotLight.quadratic * (distance * distance));
+        float distance = length(spotLight.position - fragPosition);
+        float attenuation = 1.0 / (spotLight.constant + (spotLight.linear * distance) + spotLight.quadratic * (distance * distance));
 
-    ambientLight *= attenuation;
-    diffuseLight *= attenuation;
-    specularLight *= attenuation;
+        ambientLight *= attenuation;
+        diffuseLight *= attenuation;
+        specularLight *= attenuation;
+    }
 
-    return (ambientLight * diffuseLight * specularLight);
+    return (ambientLight + diffuseLight + specularLight);
 }

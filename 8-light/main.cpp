@@ -12,23 +12,6 @@
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-// Array of colors
-glm::vec3 colors[] = 
-{
-    glm::vec3(1.0f, 1.0f, 1.0f),    // White
-    glm::vec3(0.0f, 0.0f, 0.0f),    // Black
-    glm::vec3(1.0f, 0.0f, 0.0f),    // Red
-    glm::vec3(0.0f, 1.0f, 0.0f),    // Green
-    glm::vec3(0.0f, 0.0f, 1.0f),    // Blue
-    glm::vec3(1.0f, 1.0f, 0.0f),    // Yellow
-    glm::vec3(1.0f, 0.0f, 1.0f),    // Magenta
-    glm::vec3(0.0f, 1.0f, 1.0f),    // Cyan
-    glm::vec3(0.5f, 0.5f, 0.5f),    // Grey
-    glm::vec3(1.0f, 0.5f, 0.0f),    // Orange
-    glm::vec3(0.5f, 1.0f, 0.0f),    // Lime
-    glm::vec3(0.0f, 0.5f, 1.0f)     // Royal blue
-};
-
 // Window dimensions
 GLfloat WIDTH = 800.0f, HEIGHT = 600.0f;
 const std::string TITLE = "Main Window";
@@ -59,29 +42,67 @@ bool firstMouse = true;
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 
+// Lighting set-up constants
+const glm::vec3 DIR_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
+const glm::vec3 DIR_LIGHT_DIFFUSE_VEC = glm::vec3(0.4f, 0.4f, 0.4f);
+const glm::vec3 DIR_LIGHT_SPECULAR_VEC = glm::vec3(0.5f, 0.5f, 0.5f);
+const glm::vec3 DIR_LIGHT_DIRECTION = glm::vec3(-0.2f, -1.0f, -0.3f);
+
+const glm::vec3 SPOT_LIGHT_AMBIENT_VEC = glm::vec3(0.0f, 0.0f, 0.0f);
+const glm::vec3 SPOT_LIGHT_DIFFUSE_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
+const glm::vec3 SPOT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
+
+const glm::vec3 POINT_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
+const glm::vec3 POINT_LIGHT_DIFFUSE_VEC = glm::vec3(0.8f, 0.8f, 0.8f);
+const glm::vec3 POINT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
+
+const glm::vec4 DEFAULT_BACKGROUND_COLOR = glm::vec4(0, 0, 0, 1);  // Black
+const glm::vec4 DESERT_BACKGROUND_COLOR = glm::vec4(0.6882, 0.5039, 0.3039, 1); // Light brown
+const glm::vec4 FACTORY_BACKGROUND_COLOR = glm::vec4(0.0078, 0.0353, 0.0806, 1);
+
+const float SPECULAR_INTENSITY = 32;
+const float CUT_OFF = 15.0f;
+const float OUTER_CUT_OFF = 17.0f;
+
+const glm::vec3 DEFAULT_LIGHT_COLOR = glm::vec3(1.0f, 1.0f, 1.0f);   // White
+
 // DirectionalLight set-up
-glm::vec3 directionalAmbient = glm::vec3(0.05f, 0.05f, 0.05f);
-glm::vec3 directionalDiffuse = glm::vec3(0.4f, 0.4f, 0.4f);
-glm::vec3 directionalSpecular = glm::vec3(0.5f, 0.5f, 0.5f);
-glm::vec3 lightDirection = glm::vec3(-0.2f, -1.0f, -0.3f);
+glm::vec3 directionalAmbient = DIR_LIGHT_AMBIENT_VEC;
+glm::vec3 directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC;
+glm::vec3 directionalSpecular = DIR_LIGHT_SPECULAR_VEC;
+glm::vec3 lightDirection = DIR_LIGHT_DIRECTION;
 
 // SpotLight set-up
-glm::vec3 spotLightAmbient = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 spotLightDiffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-glm::vec3 spotLightSpecular = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+glm::vec3 spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+glm::vec3 spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
 float cutOff = 15.0f;
 float outerCutOff = 17.5f;
 
 // PointLight set-up
-glm::vec3 pointLightAmbient = glm::vec3(0.05f, 0.05f, 0.05f);
-glm::vec3 pointLightDiffuse = glm::vec3(0.8f, 0.8f, 0.8f);
-glm::vec3 pointLightSpecular = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 pointLightAmbient = POINT_LIGHT_AMBIENT_VEC;
+glm::vec3 pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
+glm::vec3 pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
 
-float specularIntensity = 2;
+float specularIntensity = SPECULAR_INTENSITY;
 
 float constant = 1;
 float linear = 0.09f;
-float quadratic = 0.01f;
+float quadratic = 0.032f;
+
+glm::vec4 backgroundColor = DEFAULT_BACKGROUND_COLOR;
+glm::vec3 lightColor = DEFAULT_LIGHT_COLOR;
+
+glm::vec3 colors[] = 
+{
+    glm::vec3(1.0, 0.0, 0.0),     // Red
+    glm::vec3(1.0, 0.5, 0.0),     // Orange
+    glm::vec3(1.0, 1.0, 0.0),     // Yellow
+    glm::vec3(0.0, 1.0, 0.0),     // Green
+    glm::vec3(0.0, 0.0, 1.0),     // Blue
+    glm::vec3(0.5, 0.0, 1.0),     // Indigo
+    glm::vec3(0.8, 0.6, 0.7)      // Violet
+};
 
 
 // Float array for cube, each point has 3 coordinated (x,y,z)
@@ -285,6 +306,81 @@ void processInput(GLFWwindow* window)
     else
         camera.setMovementSpeed(SPEED);
 
+    // Default light set-up when user presses "0" key
+    if(glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+    {
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC;
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC;
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC;
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC;
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
+
+        backgroundColor = DEFAULT_BACKGROUND_COLOR;
+
+        lightColor = DEFAULT_LIGHT_COLOR;
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = CUT_OFF;
+        outerCutOff = OUTER_CUT_OFF;
+    }
+
+    // Simple Day light set-up when user presses "1" key
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+    {
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[1];
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[1];
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[1];
+
+        spotLightAmbient = glm::vec3(0.0f);
+        spotLightDiffuse = glm::vec3(0.0f);
+        spotLightDiffuse = glm::vec3(0.0f);
+
+        pointLightAmbient = glm::vec3(0.0f);
+        pointLightDiffuse = glm::vec3(0.0f);
+        pointLightSpecular = glm::vec3(0.0f);
+
+        backgroundColor = DESERT_BACKGROUND_COLOR;
+
+        lightColor = colors[1];
+
+        specularIntensity = 1;
+
+        cutOff = 0;
+        outerCutOff = 0;
+    }
+
+    // Simple factory light set-up when user presses "2" key
+    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+    {
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[4];
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[4];
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[4];
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * colors[4];
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * colors[4];
+        spotLightDiffuse = SPOT_LIGHT_SPECULAR_VEC * colors[4];
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * colors[4];
+
+        backgroundColor = FACTORY_BACKGROUND_COLOR;
+
+        lightColor = colors[4];
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = CUT_OFF;
+        outerCutOff = OUTER_CUT_OFF;
+    }
+
     // If user presses ESC key button - exit program
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         exit(0);
@@ -354,7 +450,7 @@ int main()
         processInput(window.getGlWindow());
 
         // Clear window to black screen
-        glClearColor(0, 0, 0, 1);
+        glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.t);
         // Clear color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -457,6 +553,8 @@ int main()
         }
 
         lightShader.use();
+        lightShader.setVec3("color", glm::value_ptr(lightColor));
+
         lightShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
         lightShader.setMatrix4fv("view", 1, GL_FALSE, glm::value_ptr(view));
 
