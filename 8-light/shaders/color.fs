@@ -76,7 +76,8 @@ void main()
     for(int i = 0; i < NUM_LIGHT_POINTS; i++)
         result += calculatePointLight(pointLights[i], normal, fragPosition, viewDirection);
 
-    result += calculateSpotLight(spotLight, normal, fragPosition, viewDirection);
+    if(spotLight.cutOff > 0)
+        result += calculateSpotLight(spotLight, normal, fragPosition, viewDirection);
 
     fragColor = vec4(result, 1.0);
 }
@@ -110,7 +111,7 @@ vec3 calculatePointLight(PointLight pointLight, vec3 normal, vec3 fragPosition, 
     vec3 diffuseLight = diff * pointLight.diffuse * vec3(texture(material.diffuse, textureCoordinates));
 
     vec3 reflectedLightDirection = reflect(-lightDirection, normal);
-    float specular = pow(max(dot(norm, lightDirection), 0.0), material.shininess);
+    float specular = pow(max(dot(norm, reflectedLightDirection), 0.0), material.shininess);
     vec3 specularLight = specular * pointLight.specular * vec3(texture(material.specular, textureCoordinates));
 
     float distance = length(pointLight.position - fragPosition);
@@ -137,22 +138,19 @@ vec3 calculateSpotLight(SpotLight spotLight, vec3 normal, vec3 fragPosition, vec
     float specular = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
     vec3 specularLight = specular * spotLight.specular * vec3(texture(material.specular, textureCoordinates));
 
-    if(spotLight.cutOff > 0)
-    {
-        float theta = dot(lightDirection, normalize(-spotLight.direction));
-        float epsilon = (spotLight.cutOff - spotLight.outerCutOff);
-        float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
+    float theta = dot(lightDirection, normalize(-spotLight.direction));
+    float epsilon = (spotLight.cutOff - spotLight.outerCutOff);
+    float intensity = clamp((theta - spotLight.outerCutOff) / epsilon, 0.0, 1.0);
 
-        diffuseLight *= intensity;
-        specularLight *= intensity;
+    diffuseLight *= intensity;
+    specularLight *= intensity;
 
-        float distance = length(spotLight.position - fragPosition);
-        float attenuation = 1.0 / (spotLight.constant + (spotLight.linear * distance) + spotLight.quadratic * (distance * distance));
+    float distance = length(spotLight.position - fragPosition);
+    float attenuation = 1.0 / (spotLight.constant + (spotLight.linear * distance) + spotLight.quadratic * (distance * distance));
 
-        ambientLight *= attenuation;
-        diffuseLight *= attenuation;
-        specularLight *= attenuation;
-    }
+    ambientLight *= attenuation;
+    diffuseLight *= attenuation;
+    specularLight *= attenuation;
 
     return (ambientLight + diffuseLight + specularLight);
 }

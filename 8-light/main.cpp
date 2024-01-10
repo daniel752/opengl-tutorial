@@ -56,10 +56,14 @@ const glm::vec3 POINT_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
 const glm::vec3 POINT_LIGHT_DIFFUSE_VEC = glm::vec3(0.8f, 0.8f, 0.8f);
 const glm::vec3 POINT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
 
-const glm::vec4 DEFAULT_BACKGROUND_COLOR = glm::vec4(0, 0, 0, 1);  // Black
-const glm::vec4 DESERT_BACKGROUND_COLOR = glm::vec4(0.6882, 0.5039, 0.3039, 1); // Light brown
-const glm::vec4 FACTORY_BACKGROUND_COLOR = glm::vec4(0.0078, 0.0353, 0.0806, 1);
+const glm::vec4 DEFAULT_BACKGROUND_COLOR = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);  // Black
+const glm::vec4 DESERT_BACKGROUND_COLOR = glm::vec4(0.6882f, 0.5039f, 0.3039f, 1.0f); // Light brown
+const glm::vec4 FACTORY_BACKGROUND_COLOR = glm::vec4(0.0078f, 0.0353f, 0.0806f, 1.0f);
+const glm::vec4 LAB_BACKGROUND_COLOR = glm::vec4(0.955f, 0.955f, 0.955f, 1.0f);
 
+const float CONSTANT = 1.0f;
+const float LINEAR = 0.09f;
+const float QUADRATIC = 0.032f;
 const float SPECULAR_INTENSITY = 32;
 const float CUT_OFF = 15.0f;
 const float OUTER_CUT_OFF = 17.0f;
@@ -86,9 +90,11 @@ glm::vec3 pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
 
 float specularIntensity = SPECULAR_INTENSITY;
 
-float constant = 1;
-float linear = 0.09f;
-float quadratic = 0.032f;
+float constant = CONSTANT;
+float linear = LINEAR;
+float quadratic = QUADRATIC;
+
+float alpha = 1.0f;
 
 glm::vec4 backgroundColor = DEFAULT_BACKGROUND_COLOR;
 glm::vec3 lightColor = DEFAULT_LIGHT_COLOR;
@@ -329,18 +335,22 @@ void processInput(GLFWwindow* window)
 
         cutOff = CUT_OFF;
         outerCutOff = OUTER_CUT_OFF;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
     }
 
     // Simple Day light set-up when user presses "1" key
     if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
     {
-        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[1];
-        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[1];
-        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[1];
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.1f)) * colors[1];
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.55f)) * colors[1];
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.4f)) * colors[1];
 
         spotLightAmbient = glm::vec3(0.0f);
         spotLightDiffuse = glm::vec3(0.0f);
-        spotLightDiffuse = glm::vec3(0.0f);
+        spotLightSpecular = glm::vec3(0.0f);
 
         pointLightAmbient = glm::vec3(0.0f);
         pointLightDiffuse = glm::vec3(0.0f);
@@ -354,18 +364,22 @@ void processInput(GLFWwindow* window)
 
         cutOff = 0;
         outerCutOff = 0;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
     }
 
     // Simple factory light set-up when user presses "2" key
     if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
-        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[4];
-        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[4];
-        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[4];
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.05f)) * colors[4];
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * colors[4];
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * colors[4];
 
         spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * colors[4];
         spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * colors[4];
-        spotLightDiffuse = SPOT_LIGHT_SPECULAR_VEC * colors[4];
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC * colors[4];
 
         pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
         pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
@@ -379,6 +393,68 @@ void processInput(GLFWwindow* window)
 
         cutOff = CUT_OFF;
         outerCutOff = OUTER_CUT_OFF;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
+    }
+
+    // Simple horror light set-up when user presses "3" key
+    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+    {
+        directionalAmbient = glm::vec3(0.0f);
+        directionalDiffuse = glm::vec3(0.0f);
+        directionalSpecular = glm::vec3(0.0f);
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC - glm::vec3(0.02f);
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC - glm::vec3(0.2f);
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC - glm::vec3(0.2f);
+
+        backgroundColor = DEFAULT_BACKGROUND_COLOR;
+
+        lightColor = glm::vec3(1.0f);   // White color
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = 5.0f;
+        outerCutOff = 15.0f;
+
+        constant = CONSTANT;
+        linear = 0.3f;
+        quadratic = 0.1f;
+    }
+
+    // Simple lab light set-up when user presses "4" key
+    if(glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+    {
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[3];
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[3];
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[3];
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[3];
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
+
+        backgroundColor = LAB_BACKGROUND_COLOR;
+
+        lightColor = colors[3];
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = CUT_OFF;
+        outerCutOff = OUTER_CUT_OFF;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
     }
 
     // If user presses ESC key button - exit program
@@ -491,9 +567,9 @@ int main()
 
         colorShader.setVec3("spotLight.position", glm::value_ptr(camera.getPosition()));
         colorShader.setVec3("spotLight.direction", glm::value_ptr(glm::vec3(camera.getFront().x, camera.getFront().y, camera.getFront().z)));
-        colorShader.setVec3("spotLight.ambient", glm::value_ptr(glm::vec3(1.0f)));
-        colorShader.setVec3("spotLight.diffuse", glm::value_ptr(glm::vec3(1.0f)));
-        colorShader.setVec3("spotLight.specular", glm::value_ptr(glm::vec3(1.0f)));
+        colorShader.setVec3("spotLight.ambient", glm::value_ptr(spotLightAmbient));
+        colorShader.setVec3("spotLight.diffuse", glm::value_ptr(spotLightDiffuse));
+        colorShader.setVec3("spotLight.specular", glm::value_ptr(spotLightSpecular));
         colorShader.setFloat("spotLight.costant", constant);
         colorShader.setFloat("spotLight.linear", linear);
         colorShader.setFloat("spotLight.quadratic", quadratic);
