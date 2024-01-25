@@ -1,22 +1,23 @@
 #include "glWindow.h"
 #include "shader.h"
 #include "mesh.h"
+#include "texture.h"
 #include "stb_image.h"
 
 
 // Window dimensions
-constexpr GLint WIDTH = 800, HEIGHT = 600;
-std::string TITLE = "Main Window";
+GLint width = 800, height = 600;
+std::string title = "Main Window";
 // Working directory
-std::string PWD = std::filesystem::current_path().string();
+std::string pwd = std::filesystem::current_path().string();
 // Shader sources
-std::string VERTEX_SHADER_PATH = PWD + "/../shaders/vShader.glsl";
-std::string FRAGMENT_SHADER_PATH = PWD + "/../shaders/fShader.glsl";
+std::string vShaderPath = pwd + "/../shaders/vShader.vs";
+std::string fShaderPath = pwd + "/../shaders/fShader.fs";
 
 float mixValue = 0.2f;
 
 // Float array for triangle shape, each point has 3 coordinated (x,y,z)
-GLfloat RECTANGLE[] = 
+GLfloat rectangle[] = 
 {   // Positions             // Colors
     -1.0f, -1.0f, 0.0f,     //1.0f, 0.0f, 0.0f,   // Bottom left
      1.0f, -1.0f, 0.0f,     //0.0f, 1.0f, 0.0f,   // Bottom right
@@ -24,7 +25,7 @@ GLfloat RECTANGLE[] =
     -1.0f,  1.0f, 0.0f,     //1.0f, 0.0f, 1.0f,   // Top left
 };
 
-GLfloat COLORS[] =
+GLfloat colors[] =
 {
     1.0f, 0.0f, 0.0f,   // Red
     0.0f, 1.0f, 0.0f,   // Green
@@ -32,7 +33,7 @@ GLfloat COLORS[] =
     1.0f, 0.0f, 1.0f,   // Red + Blue
 };
 
-GLfloat TEXTURE[] =
+GLfloat texture[] =
 {
     0.0f, 0.0f,     // Bottom left
     0.0f, 1.0f,     // Top left
@@ -40,7 +41,7 @@ GLfloat TEXTURE[] =
     1.0f, 0.0f,     // Bottom right
 };
 
-unsigned int INDICES[] = 
+unsigned int indices[] = 
 {
     0, 1, 2,    // First triangle (bottom left + bottom right + top right)
     0, 2, 3,    // Second triangle (bottom left + top right + top left)
@@ -59,50 +60,49 @@ void processInput(GLFWwindow* window)
         mixValue -= 0.01;
         if(mixValue <= 0.0)
             mixValue = 0.0;
+
+    // If user presses ESC key button - exit program
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        exit(0);
 }
 
 int main()
 {
-    glWindow window(TITLE, WIDTH, HEIGHT);
+    glWindow window(title, width, height);
 
     // Setup Shaders
     // Create new shader object from shader files and compile shader program
-    Shader shader(VERTEX_SHADER_PATH.c_str(), FRAGMENT_SHADER_PATH.c_str());
+    Shader shader(vShaderPath.c_str(), fShaderPath.c_str());
     
     // Create new Mesh object to handle triangle shape.
-    Mesh mesh(RECTANGLE, sizeof(RECTANGLE), COLORS, sizeof(COLORS), TEXTURE, sizeof(TEXTURE), INDICES, sizeof(INDICES), GL_FLOAT, false, 0);
+    Mesh mesh(rectangle, sizeof(rectangle), colors, sizeof(colors), texture, sizeof(texture), indices, sizeof(indices), GL_FLOAT, false, 0);
     // Initialise VAO (vertex array object) and VBO (vertex buffer object) for mesh
     mesh.initialise(GL_FLOAT, GL_FALSE);
     // Add indices (elements) attribute to mesh
-    mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, INDICES, sizeof(INDICES), &mesh.elementBuffer);
+    mesh.addAttribute(0, GL_ELEMENT_ARRAY_BUFFER, 3, 0, 0, indices, sizeof(indices), &mesh.elementBuffer);
     // Add color attribute to mesh
-    mesh.addAttribute(1, GL_ARRAY_BUFFER, 3, GL_FLOAT, GL_FALSE, COLORS, sizeof(COLORS), &mesh.colorBuffer);
+    mesh.addAttribute(1, GL_ARRAY_BUFFER, 3, GL_FLOAT, GL_FALSE, colors, sizeof(colors), &mesh.colorBuffer);
     // Add texture attribute to mesh
-    mesh.addAttribute(2, GL_ARRAY_BUFFER, 2, GL_FLOAT, GL_FALSE, TEXTURE, sizeof(TEXTURE), &mesh.textureBuffer);
+    mesh.addAttribute(2, GL_ARRAY_BUFFER, 2, GL_FLOAT, GL_FALSE, texture, sizeof(texture), &mesh.textureBuffer);
     // Unbind mesh from global state
     mesh.unbind();
 
-    // Generating texture and configuring parameters
-    GLuint texture1, texture2;
-    shader.loadTexture(std::filesystem::current_path().concat("/../../assets/container.jpg"), &texture1, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGB, 0, GL_RGB, GL_UNSIGNED_BYTE);
-    shader.loadTexture(std::filesystem::current_path().concat("/../../assets/awesomeface.png"), &texture2, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+    // Generating textures with their configurations
+    Texture smileyFace(0, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, 0, pwd + "/../../assets/awesomeface.png", GL_TEXTURE0);
+    Texture container(1, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, 0, pwd + "/../../assets/container.jpg", GL_TEXTURE1);
 
-    // OpenGL should have provide 16 texture units from the GPU
-    // Texture units can be activated using "GL_TEXTURE0" to "GL_TEXTURE15"
-    // They are defined in order so we could also get GL_TEXTURE8 via GL_TEXTURE0 + 8 for example, 
-    // which is useful when we'd have to loop over several texture units. 
-    glActiveTexture(GL_TEXTURE0);   // Activate texture unit 0
-    glBindTexture(GL_TEXTURE_2D, texture1); // Bind texture unit 0 to "texture1"
-    glActiveTexture(GL_TEXTURE1);   // Activate texture unit 1
-    glBindTexture(GL_TEXTURE_2D, texture2); // Bind texture unit 1 to "texture2"
+    smileyFace.loadTexture();
+    container.loadTexture();
+    smileyFace.useTexture();
+    container.useTexture();
 
     // Use shader program before setting uniforms
     shader.use();
 
-    // Set uniform sampler2D "texture1" to texture unit 0
-    shader.setInt("texture1", 0);
-    // Set uniform sampler2D "texture1" to texture unit 1
-    shader.setInt("texture2", 1);
+    // Set uniform sampler2D in textures array to texture unit 0
+    shader.setInt("textures[0]", 0);
+    // Set uniform sampler2D in textures array to texture unit 1
+    shader.setInt("textures[1]", 1);
 
     // Main loop
     // Run until window should close
@@ -135,6 +135,8 @@ int main()
     mesh.clear();
     shader.unbind();
     shader.clear();
+    smileyFace.clearTexture();
+    container.clearTexture();
 
     return 0;
 }

@@ -58,7 +58,6 @@ void Shader::loadTexture(std::string filename, GLuint *texture, GLenum target, G
     }
     glTexImage2D(target, level, internalFormat, width, height, border, format, type, data);
     glGenerateMipmap(target);
-
     free(data);
 }
 
