@@ -8,26 +8,35 @@
 
 
 /**
- * @brief Class glWindow handles all GLFW window operations.
+ * @brief Class GlWindow handles all GLFW window operations.
 */
-class glWindow
+class GlWindow
 {
+private:
+    GLFWwindow* window;
+
+    std::string title;
+    GLint width, height;
+    GLint bufferWidth, bufferHeight;
+
+    bool isFullscreen;
+
 public:
     /**
      * @brief Empty Constructor with default window settings.
     */
-    glWindow();
+    GlWindow();
     /**
      * @brief Constructor to build GLFWwindow object according to params.
      * @param title Title of window.
      * @param width Width of window.
      * @param height Height of window.
     */
-    glWindow(std::string title, GLint width, GLint height);
+    GlWindow(std::string title, GLint width, GLint height, bool isFullscreen);
     /**
      * @brief Destructor
     */
-    ~glWindow();
+    ~GlWindow();
 
     /**
      * @brief Initialise new window.
@@ -44,19 +53,13 @@ public:
     */
     void swapBuffers() { glfwSwapBuffers(window); }
 
+    void resizeWindow();
+
     GLFWwindow* getGlWindow() { return window; }
 
     GLfloat getBufferWidth() { return bufferWidth; }
     GLfloat getBufferHeight() { return bufferHeight; }
 
-private:
-    GLFWwindow* window;
-
-    std::string title;
-    GLint width, height;
-    GLint bufferWidth, bufferHeight;
-
-    static void staticFrameBufferSizeCallback(GLFWwindow* window, int width, int height);
     /**
      * @brief Handles resizing of window.
      * @param window Window object.
@@ -64,4 +67,6 @@ private:
      * @param height Window height.
     */
     void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
+
+    static void staticFrameBufferSizeCallback(GLFWwindow* window, int width, int height);
 };

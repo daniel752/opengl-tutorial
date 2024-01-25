@@ -11,10 +11,13 @@
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void processMovement(GLFWwindow* window, Camera* camera);
 
-// Window dimensions
+// Window configuration
 GLfloat WIDTH = 800.0f, HEIGHT = 600.0f;
 const std::string TITLE = "Main Window";
+bool isFullscreen = false;
 // Working directory
 std::string PWD = std::filesystem::current_path().string();
 // Shader sources
@@ -282,190 +285,10 @@ glm::vec3 pointLightPositions[] = {
     glm::vec3( 10.0f, 5.0f, -10.0f)
 };  
 
-// Function to handle user input from keyboard
-void processInput(GLFWwindow* window)
-{
-    float currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
-
-    // If user presses "W" key button - move up the y axis
-    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.processKeyboard(FORWARD, deltaTime);
-
-    // If user presses "S" key button - move down the y axis
-    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.processKeyboard(BACKWARD, deltaTime);
-
-    // If user presses "A" key button - move up x axis (move right)
-    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.processKeyboard(LEFT, deltaTime);
-
-    // If user presses "D" key button - move down x axis (move left)
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.processKeyboard(RIGHT, deltaTime);
-    
-    // If user presses LEFT_SHIFT key button - increase camera movement
-    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.setMovementSpeed(SPEED * 5.0f);
-    // Otherwise normal camera speed
-    else
-        camera.setMovementSpeed(SPEED);
-
-    // Default light set-up when user presses "0" key
-    if(glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
-    {
-        directionalAmbient = DIR_LIGHT_AMBIENT_VEC;
-        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC;
-        directionalSpecular = DIR_LIGHT_SPECULAR_VEC;
-
-        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
-        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
-        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
-
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC;
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
-
-        backgroundColor = DEFAULT_BACKGROUND_COLOR;
-
-        lightColor = DEFAULT_LIGHT_COLOR;
-
-        specularIntensity = SPECULAR_INTENSITY;
-
-        cutOff = CUT_OFF;
-        outerCutOff = OUTER_CUT_OFF;
-
-        constant = CONSTANT;
-        linear = LINEAR;
-        quadratic = QUADRATIC;
-    }
-
-    // Simple Day light set-up when user presses "1" key
-    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-    {
-        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.1f)) * colors[1];
-        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.55f)) * colors[1];
-        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.4f)) * colors[1];
-
-        spotLightAmbient = glm::vec3(0.0f);
-        spotLightDiffuse = glm::vec3(0.0f);
-        spotLightSpecular = glm::vec3(0.0f);
-
-        pointLightAmbient = glm::vec3(0.0f);
-        pointLightDiffuse = glm::vec3(0.0f);
-        pointLightSpecular = glm::vec3(0.0f);
-
-        backgroundColor = DESERT_BACKGROUND_COLOR;
-
-        lightColor = colors[1];
-
-        specularIntensity = 1;
-
-        cutOff = 0;
-        outerCutOff = 0;
-
-        constant = CONSTANT;
-        linear = LINEAR;
-        quadratic = QUADRATIC;
-    }
-
-    // Simple factory light set-up when user presses "2" key
-    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-    {
-        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.05f)) * colors[4];
-        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * colors[4];
-        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * colors[4];
-
-        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * colors[4];
-        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * colors[4];
-        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC * colors[4];
-
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * colors[4];
-
-        backgroundColor = FACTORY_BACKGROUND_COLOR;
-
-        lightColor = colors[4];
-
-        specularIntensity = SPECULAR_INTENSITY;
-
-        cutOff = CUT_OFF;
-        outerCutOff = OUTER_CUT_OFF;
-
-        constant = CONSTANT;
-        linear = LINEAR;
-        quadratic = QUADRATIC;
-    }
-
-    // Simple horror light set-up when user presses "3" key
-    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
-    {
-        directionalAmbient = glm::vec3(0.0f);
-        directionalDiffuse = glm::vec3(0.0f);
-        directionalSpecular = glm::vec3(0.0f);
-
-        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
-        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
-        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
-
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC - glm::vec3(0.02f);
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC - glm::vec3(0.2f);
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC - glm::vec3(0.2f);
-
-        backgroundColor = DEFAULT_BACKGROUND_COLOR;
-
-        lightColor = glm::vec3(1.0f);   // White color
-
-        specularIntensity = SPECULAR_INTENSITY;
-
-        cutOff = 5.0f;
-        outerCutOff = 15.0f;
-
-        constant = CONSTANT;
-        linear = 0.3f;
-        quadratic = 0.1f;
-    }
-
-    // Simple lab light set-up when user presses "4" key
-    if(glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
-    {
-        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[3];
-        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[3];
-        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[3];
-
-        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
-        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
-        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
-
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[3];
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
-
-        backgroundColor = LAB_BACKGROUND_COLOR;
-
-        lightColor = colors[3];
-
-        specularIntensity = SPECULAR_INTENSITY;
-
-        cutOff = CUT_OFF;
-        outerCutOff = OUTER_CUT_OFF;
-
-        constant = CONSTANT;
-        linear = LINEAR;
-        quadratic = QUADRATIC;
-    }
-
-    // If user presses ESC key button - exit program
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        exit(0);
-}
-
 int main()
 {
     // Create window object
-    glWindow window(TITLE, WIDTH, HEIGHT);
+    GlWindow window(TITLE, WIDTH, HEIGHT, false);
 
     // Set callback function to capture cursor (focus on window)
     glfwSetInputMode(window.getGlWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -473,6 +296,7 @@ int main()
     glfwSetCursorPosCallback(window.getGlWindow(), mouse_callback);
     // Set callback function to capture mouse scrolling
     glfwSetScrollCallback(window.getGlWindow(), scroll_callback);
+    glfwSetKeyCallback(window.getGlWindow(), key_callback);
 
     // Setup Shaders
     // Create new colorShader object from colorShader files and compile colorShader program
@@ -523,7 +347,7 @@ int main()
     // Run until window should close
     while (!window.isShouldClose())
     {
-        processInput(window.getGlWindow());
+        processMovement(window.getGlWindow(), &camera);
 
         // Clear window to black screen
         glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.t);
@@ -687,4 +511,201 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.processMouseScroll(static_cast<float>(yoffset));
+}
+
+void processMovement(GLFWwindow* window, Camera* camera)
+{
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    // If user presses "W" key - move up the y axis
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera->processKeyboard(FORWARD, deltaTime);
+
+    // If user presses "S" key - move down the y axis
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera->processKeyboard(BACKWARD, deltaTime);
+
+    // If user presses "A" key - move up x axis (move right)
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera->processKeyboard(LEFT, deltaTime);
+
+    // If user presses "D" key - move down x axis (move left)
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera->processKeyboard(RIGHT, deltaTime);
+    
+    // If user presses LEFT_SHIFT key - increase camera movement
+    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera->setMovementSpeed(SPEED * 5.0f);
+    // Otherwise normal camera speed
+    else
+        camera->setMovementSpeed(SPEED);
+}
+
+// Function to handle user input from keyboard
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if(key == GLFW_KEY_F && action == GLFW_PRESS)
+    {
+        if(!isFullscreen)
+        {
+            isFullscreen = true;
+            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, GLFW_REFRESH_RATE);
+        }
+        else
+        {
+            isFullscreen = false;
+            glfwSetWindowMonitor(window, NULL, 0, 0, 800, 600, GLFW_REFRESH_RATE);
+        }
+    }
+
+    // Default light set-up when user presses "0" key
+    if(key == GLFW_KEY_0 && action == GLFW_PRESS)
+    {
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC;
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC;
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC;
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC;
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
+
+        backgroundColor = DEFAULT_BACKGROUND_COLOR;
+
+        lightColor = DEFAULT_LIGHT_COLOR;
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = CUT_OFF;
+        outerCutOff = OUTER_CUT_OFF;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
+    }
+
+    // Simple Day light set-up when user presses "1" key
+    if(key == GLFW_KEY_1 && action == GLFW_PRESS)
+    {
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.1f)) * colors[1];
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.55f)) * colors[1];
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.4f)) * colors[1];
+
+        spotLightAmbient = glm::vec3(0.0f);
+        spotLightDiffuse = glm::vec3(0.0f);
+        spotLightSpecular = glm::vec3(0.0f);
+
+        pointLightAmbient = glm::vec3(0.0f);
+        pointLightDiffuse = glm::vec3(0.0f);
+        pointLightSpecular = glm::vec3(0.0f);
+
+        backgroundColor = DESERT_BACKGROUND_COLOR;
+
+        lightColor = colors[1];
+
+        specularIntensity = 1;
+
+        cutOff = 0;
+        outerCutOff = 0;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
+    }
+
+    // Simple factory light set-up when user presses "2" key
+    if(key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.05f)) * colors[4];
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * colors[4];
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * colors[4];
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * colors[4];
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * colors[4];
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC * colors[4];
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * colors[4];
+
+        backgroundColor = FACTORY_BACKGROUND_COLOR;
+
+        lightColor = colors[4];
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = CUT_OFF;
+        outerCutOff = OUTER_CUT_OFF;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
+    }
+
+    // Simple horror light set-up when user presses "3" key
+    if(key == GLFW_KEY_3 && action == GLFW_PRESS)
+    {
+        directionalAmbient = glm::vec3(0.0f);
+        directionalDiffuse = glm::vec3(0.0f);
+        directionalSpecular = glm::vec3(0.0f);
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC - glm::vec3(0.02f);
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC - glm::vec3(0.2f);
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC - glm::vec3(0.2f);
+
+        backgroundColor = DEFAULT_BACKGROUND_COLOR;
+
+        lightColor = glm::vec3(1.0f);   // White color
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = 5.0f;
+        outerCutOff = 15.0f;
+
+        constant = CONSTANT;
+        linear = 0.3f;
+        quadratic = 0.1f;
+    }
+
+    // Simple lab light set-up when user presses "4" key
+    if(key == GLFW_KEY_4 && action == GLFW_PRESS)
+    {
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[3];
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[3];
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[3];
+
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[3];
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
+
+        backgroundColor = LAB_BACKGROUND_COLOR;
+
+        lightColor = colors[3];
+
+        specularIntensity = SPECULAR_INTENSITY;
+
+        cutOff = CUT_OFF;
+        outerCutOff = OUTER_CUT_OFF;
+
+        constant = CONSTANT;
+        linear = LINEAR;
+        quadratic = QUADRATIC;
+    }
+
+    // If user presses ESC key button - exit program
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        exit(0);
 }

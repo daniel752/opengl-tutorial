@@ -1,31 +1,33 @@
 #include "glWindow.h"
 
-glWindow::glWindow()
+GlWindow::GlWindow()
 {
     window = 0;
     title = "Main Window";
     width = 800;
     height = 600;
+    isFullscreen = false;
 
     initialise();
 }
 
-glWindow::glWindow(std::string title, GLint width, GLint height)
+GlWindow::GlWindow(std::string title, GLint width, GLint height, bool isFullscreen)
 {
     this->title = title;
     this->width = width;
     this->height = height;
+    this->isFullscreen = isFullscreen;
 
     initialise();
 }
 
-glWindow::~glWindow()
+GlWindow::~GlWindow()
 {
     glfwDestroyWindow(window);
     glfwTerminate();
 }
 
-int glWindow::initialise()
+int GlWindow::initialise()
 {
     // Initialize GLFW
     if(!glfwInit())
@@ -73,15 +75,29 @@ int glWindow::initialise()
     return GL_TRUE;
 }
 
+void GlWindow::resizeWindow()
+{
+    if(!isFullscreen)
+    {
+        isFullscreen = true;
+        glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, GLFW_REFRESH_RATE);
+    }
+    else
+    {
+        isFullscreen = false;
+        glfwSetWindowMonitor(window, NULL, 0, 0, 800, 600, GLFW_REFRESH_RATE);
+    }
+}
+
 // Define the static member function for the callback
-void glWindow::staticFrameBufferSizeCallback(GLFWwindow* window, int width, int height)
+void GlWindow::staticFrameBufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     // Forward the call to the non-static member function
-    static_cast<glWindow*>(glfwGetWindowUserPointer(window))->frameBufferSizeCallback(window, width, height);
+    static_cast<GlWindow*>(glfwGetWindowUserPointer(window))->frameBufferSizeCallback(window, width, height);
 }
 
 // Define the non-static member function for the callback
-void glWindow::frameBufferSizeCallback(GLFWwindow* window, int width, int height)
+void GlWindow::frameBufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
