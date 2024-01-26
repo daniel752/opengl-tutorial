@@ -15,7 +15,7 @@ public:
      * @param vertices Vertices (points) of mesh in space.
      * @param verticesSize Size of vertices in memory.
     */
-    Mesh(GLfloat *vertices, int verticesSize, GLfloat *colors, int colorsSize, GLfloat *textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride);
+    Mesh(GLfloat *vertices, int verticesSize, GLfloat *textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride);
     /**
      * @brief Destructor.
     */
@@ -47,7 +47,7 @@ public:
     GLuint vertexArray, vertexBuffer, colorBuffer, textureBuffer, elementBuffer;
 
 private:
-    GLfloat *vertices, *colors, *textureCoordinates;
-    int verticesSize, colorsSize, textureCoordinatesSize, indicesSize;
+    GLfloat *vertices, *textureCoordinates;
+    int verticesSize, textureCoordinatesSize, indicesSize;
     GLuint *indices;
 };

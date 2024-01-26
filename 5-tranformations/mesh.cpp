@@ -1,13 +1,11 @@
 #include "mesh.h"
 
-Mesh::Mesh(GLfloat* vertices, int verticesSize, GLfloat* colors, int colorsSize, GLfloat* textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride) :
+Mesh::Mesh(GLfloat* vertices, int verticesSize, GLfloat* textureCoordinates, int textureCoordinatesSize, unsigned int *indices, int indicesSize, GLenum type, bool normalize, GLsizei stride) :
     vertices(vertices), verticesSize(verticesSize), // Initialise vertices
-    colors(colors), colorsSize(colorsSize), // Initialise colors
     textureCoordinates(textureCoordinates), textureCoordinatesSize(textureCoordinatesSize), // Initialise texture coordinates
     indices(indices), indicesSize(indicesSize),  // Initialise indices (elements)
     vertexArray(0),
     vertexBuffer(0),
-    colorBuffer(0),
     textureBuffer(0),
     elementBuffer(0)    
 {
@@ -18,7 +16,6 @@ Mesh::~Mesh()
 {
     clear();
     vertices = nullptr;
-    colors = nullptr;
     textureCoordinates = nullptr;
     indices = nullptr;
 }
@@ -98,12 +95,6 @@ void Mesh::clear()
     {
         glDeleteBuffers(1, &vertexBuffer);
         vertexBuffer = 0;
-    }
-
-    if(colorBuffer != 0)
-    {
-        glDeleteBuffers(1, &colorBuffer);
-        colorBuffer = 0;
     }
 
     if (textureBuffer != 0)
