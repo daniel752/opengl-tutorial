@@ -446,17 +446,9 @@ int main()
             light.render(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);    
         }
         lightShader.unbind();
-
-        // Unbind mesh from global state
         mesh.unbind();
 
-        // OpenGL uses a double buffer (front and back buffers) technique for rendering
-        // All of the rendering commands will go to back buffer
-        // After all of the rendering commands are done we switch to the front buffer which has the final output image
-        // If we don't do this we can see flickering in output image, cause the image is build pixel by pixel from left to right and from top to bottom
-        // So basically we'll see the image being build and that's why will see the flickering (if image is small and not complex than it probably won't matter)
         window.swapBuffers();
-        // Get + Handle glfwWindow I/O
         glfwPollEvents();
     }
     
