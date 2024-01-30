@@ -1,9 +1,14 @@
 #include "glWindow.h"
 #include "shader.h"
 #include "mesh.h"
+#include "texture.h"
 #include "camera.h"
+#include "directionalLight.h"
+#include "pointLight.h"
+#include "spotLight.h"
 
 #include <sstream>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -14,17 +19,51 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void processMovement(GLFWwindow* window, Camera* camera);
 
+// CONSTANTS
+// Lighting
+// Directional light
+const glm::vec3 DIR_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
+const glm::vec3 DIR_LIGHT_DIFFUSE_VEC = glm::vec3(0.4f, 0.4f, 0.4f);
+const glm::vec3 DIR_LIGHT_SPECULAR_VEC = glm::vec3(0.5f, 0.5f, 0.5f);
+const glm::vec3 DIR_LIGHT_DIRECTION = glm::vec3(-0.2f, -1.0f, -0.3f);
+// Directional light
+// Spot light
+const glm::vec3 SPOT_LIGHT_AMBIENT_VEC = glm::vec3(0.0f, 0.0f, 0.0f);
+const glm::vec3 SPOT_LIGHT_DIFFUSE_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
+const glm::vec3 SPOT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
+// Spot light
+// Point light
+const glm::vec3 POINT_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
+const glm::vec3 POINT_LIGHT_DIFFUSE_VEC = glm::vec3(0.8f, 0.8f, 0.8f);
+const glm::vec3 POINT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
+// Point light
+
+// Background
+const glm::vec4 DEFAULT_BACKGROUND_COLOR = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);  // Black
+const glm::vec4 DESERT_BACKGROUND_COLOR = glm::vec4(0.6882f, 0.5039f, 0.3039f, 1.0f); // Light brown
+const glm::vec4 FACTORY_BACKGROUND_COLOR = glm::vec4(0.0078f, 0.0353f, 0.0806f, 1.0f);
+const glm::vec4 LAB_BACKGROUND_COLOR = glm::vec4(0.955f, 0.955f, 0.955f, 1.0f);
+
+const float CONSTANT = 1.0f;
+const float LINEAR = 0.09f;
+const float QUADRATIC = 0.032f;
+const float SPECULAR_INTENSITY = 32;
+const float CUT_OFF = 15.0f;
+const float OUTER_CUT_OFF = 17.0f;
+
+const glm::vec3 DEFAULT_LIGHT_COLOR = glm::vec3(1.0f, 1.0f, 1.0f);   // White
+
 // Window configuration
-GLfloat WIDTH = 800.0f, HEIGHT = 600.0f;
-const std::string TITLE = "Main Window";
+GLfloat width = 800.0f, height = 600.0f;
+std::string title = "Main Window";
 bool isFullscreen = false;
 // Working directory
-std::string PWD = std::filesystem::current_path().string();
+std::string pwd = std::filesystem::current_path().string();
 // Shader sources
-const std::string COLOR_V_SHADER_PATH = PWD + "/../shaders/color.vs";
-const std::string COLOR_F_SHADER_PATH = PWD + "/../shaders/color.fs";
-const std::string LIGHT_V_SHADER_PATH = PWD + "/../shaders/light.vs";
-const std::string LIGHT_F_SHADER_PATH = PWD + "/../shaders/light.fs";
+std::string colorVShaderPath = pwd + "/../shaders/light.vs";
+std::string colorFShaderPath = pwd + "/../shaders/light.fs";
+std::string lightVShaderPath = pwd + "/../shaders/lightCube.vs";
+std::string lightFShaderPath = pwd + "/../shaders/lightCube.fs";
 
 // Model transformation matrix
 glm::mat4 model;
@@ -42,36 +81,8 @@ float lastFrame = 0.0f;
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 bool firstMouse = true;
-float lastX = WIDTH / 2.0f;
-float lastY = HEIGHT / 2.0f;
-
-// Lighting set-up constants
-const glm::vec3 DIR_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
-const glm::vec3 DIR_LIGHT_DIFFUSE_VEC = glm::vec3(0.4f, 0.4f, 0.4f);
-const glm::vec3 DIR_LIGHT_SPECULAR_VEC = glm::vec3(0.5f, 0.5f, 0.5f);
-const glm::vec3 DIR_LIGHT_DIRECTION = glm::vec3(-0.2f, -1.0f, -0.3f);
-
-const glm::vec3 SPOT_LIGHT_AMBIENT_VEC = glm::vec3(0.0f, 0.0f, 0.0f);
-const glm::vec3 SPOT_LIGHT_DIFFUSE_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
-const glm::vec3 SPOT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
-
-const glm::vec3 POINT_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
-const glm::vec3 POINT_LIGHT_DIFFUSE_VEC = glm::vec3(0.8f, 0.8f, 0.8f);
-const glm::vec3 POINT_LIGHT_SPECULAR_VEC = glm::vec3(1.0f, 1.0f, 1.0f);
-
-const glm::vec4 DEFAULT_BACKGROUND_COLOR = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);  // Black
-const glm::vec4 DESERT_BACKGROUND_COLOR = glm::vec4(0.6882f, 0.5039f, 0.3039f, 1.0f); // Light brown
-const glm::vec4 FACTORY_BACKGROUND_COLOR = glm::vec4(0.0078f, 0.0353f, 0.0806f, 1.0f);
-const glm::vec4 LAB_BACKGROUND_COLOR = glm::vec4(0.955f, 0.955f, 0.955f, 1.0f);
-
-const float CONSTANT = 1.0f;
-const float LINEAR = 0.09f;
-const float QUADRATIC = 0.032f;
-const float SPECULAR_INTENSITY = 32;
-const float CUT_OFF = 15.0f;
-const float OUTER_CUT_OFF = 17.0f;
-
-const glm::vec3 DEFAULT_LIGHT_COLOR = glm::vec3(1.0f, 1.0f, 1.0f);   // White
+float lastX = width / 2.0f;
+float lastY = height / 2.0f;
 
 // DirectionalLight set-up
 glm::vec3 directionalAmbient = DIR_LIGHT_AMBIENT_VEC;
@@ -288,7 +299,7 @@ glm::vec3 pointLightPositions[] = {
 int main()
 {
     // Create window object
-    GlWindow window(TITLE, WIDTH, HEIGHT, false);
+    GlWindow window(title, width, height, false);
 
     // Set callback function to capture cursor (focus on window)
     glfwSetInputMode(window.getGlWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -300,8 +311,8 @@ int main()
 
     // Setup Shaders
     // Create new colorShader object from colorShader files and compile colorShader program
-    Shader colorShader(COLOR_V_SHADER_PATH.c_str(), COLOR_F_SHADER_PATH.c_str());
-    Shader lightShader(LIGHT_V_SHADER_PATH.c_str(), LIGHT_F_SHADER_PATH.c_str());
+    Shader colorShader(colorVShaderPath.c_str(), colorFShaderPath.c_str());
+    Shader lightShader(lightVShaderPath.c_str(), lightFShaderPath.c_str());
 
     // Create new Mesh object for cubes
     Mesh mesh(0, vertices, sizeof(vertices), GL_FLOAT, false, 0);
@@ -319,18 +330,19 @@ int main()
     // Unbind mesh from global state
     mesh.unbind();
 
-    GLuint diffuseMap, specularMap, emissionMap;
+    Texture diffuse(0, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, 0, pwd + "/../../assets/container2.png", GL_TEXTURE0);
+    Texture specular(1, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, 0, pwd + "/../../assets/container2_specular.png", GL_TEXTURE1);
+    diffuse.loadTexture();
+    // diffuse.useTexture();
+    specular.loadTexture();
+    // specular.useTexture();
+
+    // GLuint diffuseMap, specularMap, emissionMap;
     colorShader.use();
-    // Load diffuse map texture
-    colorShader.loadTexture(PWD + "/../../assets/container2.png", &diffuseMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
     // Point material's diffuse to diffuse map at texture unit 0
     colorShader.setInt("material.diffuse", 0);
-
-    // Load specular map texture
-    colorShader.loadTexture(PWD + "/../../assets/container2_specular.png", &specularMap, GL_TEXTURE_2D, GL_REPEAT, GL_LINEAR, 0, GL_RGBA, 0, GL_RGBA, GL_UNSIGNED_BYTE);
     // Point material's specular to specular map at texture unit 1
     colorShader.setInt("material.specular", 1);
-
     // Unbind shader from global state
     colorShader.unbind();
 
@@ -358,50 +370,24 @@ int main()
 
         colorShader.setFloat("material.shininess", specularIntensity);
 
-        colorShader.setVec3("directionalLight.direction", glm::value_ptr(lightDirection));
-        colorShader.setVec3("directionalLight.ambient", glm::value_ptr(directionalAmbient));
-        colorShader.setVec3("directionalLight.diffuse", glm::value_ptr(directionalDiffuse));
-        colorShader.setVec3("directionalLight.specular", glm::value_ptr(directionalSpecular));
+        DirectionalLight directionalLight(lightDirection, directionalAmbient, directionalDiffuse, directionalSpecular);
+        directionalLight.load(colorShader.getID());
+
+        std::vector<PointLight> pointLights;
 
         for(unsigned int i = 0; i < 5; i++)
         {
-            std::stringstream strPosition, strConstant, strLinear, strQudratic, strAmbient, strDiffuse, strSpecular;
-            
-            strPosition << "pointLights[" << i << "].position";
-            colorShader.setVec3(strPosition.str(), glm::value_ptr(pointLightPositions[i]));
-
-            strConstant << "pointLights[" << i << "].constant";
-            colorShader.setFloat(strPosition.str(), constant);
-
-            strLinear << "pointLights[" << i << "].linear";
-            colorShader.setFloat(strLinear.str(), linear);
-
-            strQudratic << "pointLights[" << i << "].quadratic";
-            colorShader.setFloat(strQudratic.str(), quadratic);
-
-            strAmbient << "pointLights[" << i << "].ambient";
-            colorShader.setVec3(strAmbient.str(), glm::value_ptr(glm::vec3(pointLightAmbient)));
-
-            strDiffuse << "pointLights[" << i << "].diffuse";
-            colorShader.setVec3(strDiffuse.str(), glm::value_ptr(glm::vec3(pointLightDiffuse)));
-
-            strSpecular << "pointLights[" << i << "].specular";
-            colorShader.setVec3(strSpecular.str(), glm::value_ptr(glm::vec3(pointLightSpecular)));
+            pointLights.push_back(PointLight(pointLightPositions[i], constant, linear, quadratic, pointLightAmbient, pointLightDiffuse, pointLightSpecular));
+            pointLights[i].injectIndex(i);
+            pointLights[i].load(colorShader.getID());
         }
 
-        colorShader.setVec3("spotLight.position", glm::value_ptr(camera.getPosition()));
-        colorShader.setVec3("spotLight.direction", glm::value_ptr(glm::vec3(camera.getFront().x, camera.getFront().y, camera.getFront().z)));
-        colorShader.setVec3("spotLight.ambient", glm::value_ptr(spotLightAmbient));
-        colorShader.setVec3("spotLight.diffuse", glm::value_ptr(spotLightDiffuse));
-        colorShader.setVec3("spotLight.specular", glm::value_ptr(spotLightSpecular));
-        colorShader.setFloat("spotLight.costant", constant);
-        colorShader.setFloat("spotLight.linear", linear);
-        colorShader.setFloat("spotLight.quadratic", quadratic);
-        colorShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(cutOff)));
-        colorShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(outerCutOff)));
+        SpotLight spotLight(camera.getPosition(), camera.getFront(), cutOff, outerCutOff, constant,
+                            linear, quadratic, spotLightAmbient, spotLightDiffuse, spotLightSpecular);
+        spotLight.load(colorShader.getID());
 
         // Set perspective projection matrix
-        projection = glm::perspective(glm::radians(camera.getFov()), WIDTH / HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.getFov()), width / height, 0.1f, 100.0f);
         colorShader.setMatrix4fv("projection", 1, GL_FALSE, glm::value_ptr(projection));
 
         // Set view matrix
@@ -411,15 +397,8 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         colorShader.setMatrix4fv("model", 1, GL_FALSE, glm::value_ptr(model));
 
-        // Set texture unit 0 active (unnecessary if we have only one texture, texture unit 0 is the default)
-        glActiveTexture(GL_TEXTURE0);
-        // Bind "diffuseMap" to texture unit 0
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-
-        // Set texture unit 1 active
-        glActiveTexture(GL_TEXTURE1);
-        // Bind "specularMap" to texture unit 1
-        glBindTexture(GL_TEXTURE_2D, specularMap);
+        diffuse.useTexture();
+        specular.useTexture();
 
         // Iterate over objects locations (vec3 array)
         for(unsigned int i = 0; i < 10; i++)

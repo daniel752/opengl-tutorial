@@ -19,7 +19,7 @@ enum CameraMovement
 };
 
 // Default camera values
-const glm::vec3 POSITION(0.0f, 0.0f, 0.0f);
+const glm::vec3 POS(0.0f, 0.0f, 0.0f);
 const glm::vec3 UP(0.0f, 1.0f, 0.0f);
 const glm::vec3 FRONT(0.0f, 0.0f, -1.0f);
 const float YAW = -90.0f;
@@ -55,7 +55,7 @@ public:
      * @param yaw Starting YAW (rotation around Y axis) value, should be -90.0f.
      * @param pitch Starting PITCH (rotation around X axis) value, should be 0.0f.
     */
-    Camera(glm::vec3 position = POSITION, glm::vec3 up = UP, float yaw = YAW, float pitch = PITCH);
+    Camera(glm::vec3 position = POS, glm::vec3 up = UP, float yaw = YAW, float pitch = PITCH);
 
     /**
      * @brief Constructor to initialise camera with scalar values.

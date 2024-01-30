@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(camera)
 
-add_executable(main.o main.cpp glWindow.cpp mesh.cpp shader.cpp camera.cpp stb_image.cpp)
+add_executable(main.o main.cpp glWindow.cpp mesh.cpp shader.cpp camera.cpp texture.cpp stb_image.cpp)
 
 find_package(GLEW REQUIRED)
 target_link_libraries(main.o GLEW::GLEW)
