@@ -50,32 +50,21 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geo
     // Create shader program
     ID = glCreateProgram();
 
-    std::cout << "Compiling vShader\n";
     GLuint vShader = addShader(ID, vertexCode.c_str(), GL_VERTEX_SHADER);
-    std::cout << "Finished compiling vShader\n";
-    std::cout << "\nCompiling fShader\n";
     GLuint fShader = addShader(ID, fragmentCode.c_str(), GL_FRAGMENT_SHADER);
-    std::cout << "Finished compiling fShader\n";
     GLuint gShader  = 0;
     if(geometryPath != nullptr)
     {
-        std::cout << "\nCompiling gShader\n";
         gShader = addShader(ID, geometryCode.c_str(), GL_GEOMETRY_SHADER);
-        std::cout << "Finished complining gShader\n";
     }
-    std::cout << "Linking program\n";
     glLinkProgram(ID);
     checkCompileErrors(ID, GL_PROGRAM);
-    std::cout << "Finished linking program\n";
 
     glDeleteShader(vShader);
-    std::cout << "Deleted vShader\n";
     glDeleteShader(fShader);
-    std::cout << "Deleted fShader\n";
     if(geometryPath != nullptr)
     {
         glDeleteShader(gShader);
-        std::cout << "Deleted gShader\n";
     }
 }
 

@@ -13,7 +13,6 @@ Model::~Model()
 
 void Model::draw(Shader &shader)
 {
-    // std::cout << "Drawing model with shader " << shader.getID() << std::endl;
     // Iterate over model's meshes and renders them
     for(unsigned int i = 0; i < meshes.size(); i++)
         meshes[i].draw(shader);

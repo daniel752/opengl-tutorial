@@ -14,7 +14,7 @@
 constexpr int MAX_BONE_INFLUENCE = 4;
 
 /**
- * @brief Vertex struct to handle vertices in mesh
+ * @brief Vertex struct to store vertex related data in mesh
 */
 struct Vertex
 {
@@ -36,7 +36,7 @@ struct Vertex
 };
 
 /**
- * @brief Texture struct to handle texture in mesh
+ * @brief Texture struct to store texture related data in mesh
 */
 struct Texture
 {

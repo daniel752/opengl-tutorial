@@ -3,6 +3,7 @@
 #include "model.h"
 #include "camera.h"
 #include "directionalLight.h"
+#include "pointLight.h"
 #include "stb_image.h"
 
 #include <sstream>
@@ -21,7 +22,7 @@ void processMovement(GLFWwindow* window, Camera* camera);
 // CONSTANTS
 // Lighting
 // Directional light
-const glm::vec3 DIR_LIGHT_AMBIENT_VEC = glm::vec3(0.05f, 0.05f, 0.05f);
+const glm::vec3 DIR_LIGHT_AMBIENT_VEC = glm::vec3(0.5f, 0.5f, 0.5f);
 const glm::vec3 DIR_LIGHT_DIFFUSE_VEC = glm::vec3(0.4f, 0.4f, 0.4f);
 const glm::vec3 DIR_LIGHT_SPECULAR_VEC = glm::vec3(0.5f, 0.5f, 0.5f);
 const glm::vec3 DIR_LIGHT_DIRECTION = glm::vec3(-0.2f, -1.0f, -0.3f);
@@ -61,9 +62,10 @@ std::string pwd = std::filesystem::current_path().string();
 // Shader sources
 std::string lightVShaderPath = pwd + "/../shaders/light.vs";
 std::string lightFShaderPath = pwd + "/../shaders/light.fs";
-std::string modelVShaderPath = pwd + "/../shaders/model_loading.vs";
-std::string modelFShaderPath = pwd + "/../shaders/model_loading.fs";
+std::string modelVShaderPath = pwd + "/../shaders/mesh.vs";
+std::string modelFShaderPath = pwd + "/../shaders/mesh.fs";
 std::string modelPath = pwd + "/../../assets/backpack/backpack.obj";
+std::string cubePath = pwd + "/../../assets/cube/cube.obj";
 
 // Model transformation matrix
 glm::mat4 model;
@@ -113,188 +115,27 @@ float alpha = 1.0f;
 glm::vec4 backgroundColor = DEFAULT_BACKGROUND_COLOR;
 glm::vec3 lightColor = DEFAULT_LIGHT_COLOR;
 
+glm::vec3 pointLightPositions[] = 
+{
+	glm::vec3( 0.7f,  0.2f,  7.0f),
+	glm::vec3( 3.5f, -3.5f, -6.0f),
+	glm::vec3(-4.0f,  2.0f, -12.0f),
+	glm::vec3( 0.0f,  3.5f, -6.0f),
+    glm::vec3( 10.0f, 5.0f, 10.0f)
+};
+
 glm::vec3 colors[] = 
 {
-    glm::vec3(1.0, 0.0, 0.0),     // Red
-    glm::vec3(1.0, 0.5, 0.0),     // Orange
-    glm::vec3(1.0, 1.0, 0.0),     // Yellow
-    glm::vec3(0.0, 1.0, 0.0),     // Green
-    glm::vec3(0.0, 0.0, 1.0),     // Blue
-    glm::vec3(0.5, 0.0, 1.0),     // Indigo
-    glm::vec3(0.8, 0.6, 0.7)      // Violet
+    glm::vec3(1.0f, 1.0f, 1.0f),     // White
+    glm::vec3(0.0f, 0.0f, 0.0f),     // Black
+    glm::vec3(1.0f, 0.0f, 0.0f),     // Red
+    glm::vec3(1.0f, 0.5f, 0.0f),     // Orange
+    glm::vec3(1.0f, 1.0f, 0.0f),     // Yellow
+    glm::vec3(0.0f, 1.0f, 0.0f),     // Green
+    glm::vec3(0.0f, 0.0f, 1.0f),     // Blue
+    glm::vec3(0.5f, 0.0f, 1.0f),     // Indigo
+    glm::vec3(0.8f, 0.6f, 0.7f)      // Violet
 };
-
-
-// Float array for cube, each point has 3 coordinated (x,y,z)
-float vertices[] = {
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-};
-
-// Float array to represent cube normals.
-// A Cube has 6 vertices on each face (Every square is made by triangle, so 2 triangles means 6 vertices)
-// so each 6 rows represent a face on the cube.
-// Each face has a different direction with it's normal vector.
-float normals[] =
-{
-     // Negetive Z axis
-     0.0f, 0.0f, -1.0f,
-     0.0f, 0.0f, -1.0f,
-     0.0f, 0.0f, -1.0f,
-     0.0f, 0.0f, -1.0f,
-     0.0f, 0.0f, -1.0f,
-     0.0f, 0.0f, -1.0f,
-
-     // Positive Z axis
-     0.0f, 0.0f,  1.0f,
-     0.0f, 0.0f,  1.0f,
-     0.0f, 0.0f,  1.0f,
-     0.0f, 0.0f,  1.0f,
-     0.0f, 0.0f,  1.0f,
-     0.0f, 0.0f,  1.0f,
-
-     // Negetive X axis
-    -1.0f, 0.0f,  0.0f,
-    -1.0f, 0.0f,  0.0f,
-    -1.0f, 0.0f,  0.0f,
-    -1.0f, 0.0f,  0.0f,
-    -1.0f, 0.0f,  0.0f,
-    -1.0f, 0.0f,  0.0f,
-    
-     // Positive X axis
-     1.0f, 0.0f,  0.0f,
-     1.0f, 0.0f,  0.0f,
-     1.0f, 0.0f,  0.0f,
-     1.0f, 0.0f,  0.0f,
-     1.0f, 0.0f,  0.0f,
-     1.0f, 0.0f,  0.0f,
-
-     // Negetive Y axis
-     0.0f, -1.0f, 0.0f,
-     0.0f, -1.0f, 0.0f,
-     0.0f, -1.0f, 0.0f,
-     0.0f, -1.0f, 0.0f,
-     0.0f, -1.0f, 0.0f,
-     0.0f, -1.0f, 0.0f,
-
-     // Positive Y axis
-     0.0f,  1.0f, 0.0f,
-     0.0f,  1.0f, 0.0f,
-     0.0f,  1.0f, 0.0f,
-     0.0f,  1.0f, 0.0f,
-     0.0f,  1.0f, 0.0f,
-     0.0f,  1.0f, 0.0f,
-};
-
-// Float array for texture coordinates.
-// Texture coordinates are in 2D and that's why we have only two components (X,Y) for each vertex.
-// Texture coordinates start from bottom-left (0,0) of image.
-float texture[] =
-{
-    0.0f, 0.0f,
-    1.0f, 0.0f,
-    1.0f, 1.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    0.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 0.0f,
-    1.0f, 1.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    0.0f, 0.0f,
-    1.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    0.0f, 1.0f,
-    0.0f, 0.0f,
-    1.0f, 0.0f,
-    1.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    0.0f, 1.0f,
-    0.0f, 0.0f,
-    1.0f, 0.0f,
-    0.0f, 1.0f,
-    1.0f, 1.0f,
-    1.0f, 0.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 1.0f,
-    0.0f, 1.0f,
-    1.0f, 1.0f,
-    1.0f, 0.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 1.0f
-};
-
-unsigned int indices[] = 
-{
-    0, 1, 2,    // First triangle (bottom left + bottom right + top right)
-    0, 2, 3,    // Second triangle (bottom left + top right + top left)
-};
-
-// Vector 3 (X,Y,Z) array for cube positions in space
-glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  7.0f), 
-    glm::vec3( 2.0f,  5.0f, -15.0f), 
-    glm::vec3(-1.5f, -2.2f, -2.5f),  
-    glm::vec3(-3.8f, -2.0f, -20.3f),  
-    glm::vec3( 2.4f, -0.4f, -3.5f),  
-    glm::vec3(-1.7f,  3.0f, -7.5f),  
-    glm::vec3( 1.3f, -2.0f, -15.5f),  
-    glm::vec3( 1.5f,  2.0f, -2.5f), 
-    glm::vec3( 1.5f,  0.2f, -1.5f), 
-    glm::vec3(-1.3f,  1.0f, -1.5f)  
-};
-
-glm::vec3 pointLightPositions[] = {
-	glm::vec3( 0.7f,  0.2f,  2.0f),
-	glm::vec3( 2.3f, -3.3f, -4.0f),
-	glm::vec3(-4.0f,  2.0f, -12.0f),
-	glm::vec3( 0.0f,  0.0f, -3.0f),
-    glm::vec3( 10.0f, 5.0f, -10.0f)
-};  
 
 int main()
 {
@@ -321,18 +162,17 @@ int main()
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
 
-    // configure global opengl state
-    // -----------------------------
-    glEnable(GL_DEPTH_TEST);
-
     // build and compile shaders
     // -------------------------
-    Shader modelShader(modelVShaderPath.c_str(), modelFShaderPath.c_str());
+    Shader meshShader(modelVShaderPath.c_str(), modelFShaderPath.c_str());
     Shader lightShader(lightVShaderPath.c_str(), lightFShaderPath.c_str());
+
+    Shader::enableDepth();
 
     // load models
     // -----------
     Model backpack(modelPath.c_str());
+    Model cube(cubePath.c_str());
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -347,25 +187,55 @@ int main()
 
         // render
         // ------
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.t);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
-        modelShader.use();
+        // meshShader.use();
+        lightShader.use();
+
+        lightShader.setFloat("material.shininess", specularIntensity);
+
+        DirectionalLight directionalLight(lightDirection, directionalAmbient, directionalDiffuse, directionalSpecular);
+        directionalLight.load(lightShader.getID());
+
+        std::vector<PointLight> pointLights;
+        for(unsigned int i = 0; i < 5; i++)
+        {
+            pointLights.push_back(PointLight(pointLightPositions[i], constant, linear, quadratic, pointLightAmbient, pointLightDiffuse, pointLightSpecular));
+            pointLights[i].injectIndex(i);
+            pointLights[i].load(lightShader.getID());
+        }
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.getFov()), width / height, 0.1f, 100.0f);
         glm::mat4 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
-        modelShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        modelShader.setMatrix4fv("view", 1, GL_FALSE, view);
+        lightShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
+        lightShader.setMatrix4fv("view", 1, GL_FALSE, view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        modelShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        backpack.draw(modelShader);
+        lightShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::mat3(glm::inverse(model)));
+        lightShader.setMatrix4fv("model", 1, GL_FALSE, model);
+        backpack.draw(lightShader);
+        lightShader.unbind();
 
+        meshShader.use();
+        meshShader.setVec3("color", glm::value_ptr(lightColor));
+        meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
+        meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
+
+        for(unsigned int i = 0; i < 5; i++)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, pointLightPositions[i]);
+            model = glm::scale(model, glm::vec3(0.01f));
+            meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
+            cube.draw(meshShader);
+        }
+        meshShader.unbind();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -483,21 +353,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Simple Day light set-up when user presses "1" key
     if(key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
-        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.1f)) * colors[1];
-        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.55f)) * colors[1];
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.2f)) * colors[1];
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.4f)) * colors[1];
         directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.4f)) * colors[1];
 
         spotLightAmbient = glm::vec3(0.0f);
         spotLightDiffuse = glm::vec3(0.0f);
         spotLightSpecular = glm::vec3(0.0f);
 
-        pointLightAmbient = glm::vec3(0.0f);
-        pointLightDiffuse = glm::vec3(0.0f);
-        pointLightSpecular = glm::vec3(0.0f);
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * colors[4];
 
         backgroundColor = DESERT_BACKGROUND_COLOR;
 
-        lightColor = colors[1];
+        lightColor = colors[4];
 
         specularIntensity = 1;
 
@@ -509,24 +380,24 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         quadratic = QUADRATIC;
     }
 
-    // Simple factory light set-up when user presses "2" key
+    // Simple under the sea light set-up when user presses "2" key
     if(key == GLFW_KEY_2 && action == GLFW_PRESS)
     {
-        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.05f)) * colors[4];
-        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * colors[4];
-        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * colors[4];
+        lightColor = colors[6];
 
-        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * colors[4];
-        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * colors[4];
-        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC * colors[4];
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.05f)) * lightColor;
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * lightColor;
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * lightColor;
 
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * colors[4];
+        spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * lightColor;
+        spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * lightColor;
+        spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC * lightColor;
+
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * lightColor;
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * lightColor;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * lightColor;
 
         backgroundColor = FACTORY_BACKGROUND_COLOR;
-
-        lightColor = colors[4];
 
         specularIntensity = SPECULAR_INTENSITY;
 
@@ -541,21 +412,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Simple horror light set-up when user presses "3" key
     if(key == GLFW_KEY_3 && action == GLFW_PRESS)
     {
-        directionalAmbient = glm::vec3(0.0f);
-        directionalDiffuse = glm::vec3(0.0f);
-        directionalSpecular = glm::vec3(0.0f);
+        directionalAmbient = glm::vec3(0.1f);
+        directionalDiffuse = glm::vec3(0.1f);
+        directionalSpecular = glm::vec3(0.1f);
 
         spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
         spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
         spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
 
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC - glm::vec3(0.02f);
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC - glm::vec3(0.2f);
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC - glm::vec3(0.2f);
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC - glm::vec3(0.1f);
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC - glm::vec3(0.1f);
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC - glm::vec3(0.1f);
 
         backgroundColor = DEFAULT_BACKGROUND_COLOR;
 
-        lightColor = glm::vec3(1.0f);   // White color
+        lightColor = colors[0];
 
         specularIntensity = SPECULAR_INTENSITY;
 

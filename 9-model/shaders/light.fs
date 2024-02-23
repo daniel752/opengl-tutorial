@@ -61,6 +61,9 @@ uniform SpotLight spotLight;
 uniform DirectionalLight directionalLight;
 uniform PointLight pointLights[NUM_LIGHT_POINTS];
 
+vec3 calculateAmbientLight(vec3 ambient, sampler2D diffuse);
+vec3 calculateDiffuseLight(vec3 lightDirection, vec3 normal, vec3 lightDiffuse, sampler2D materialDiffuse);
+vec3 calculateSpecularLight(vec3 lightDirection, vec3 normal, vec3 viewDirection, vec3 LightSpecular, float materialShininess, sampler2D materialSpecular);
 vec3 calculateDirectionLight(DirectionalLight directionalLight, vec3 normal, vec3 viewDirection);
 vec3 calculatePointLight(PointLight pointLight, vec3 normal, vec3 fragPosition, vec3 viewDirection);
 vec3 calculateSpotLight(SpotLight spotLight, vec3 normal, vec3 fragPosition, vec3 viewDirection);
@@ -69,7 +72,7 @@ void main()
 {
     vec3 result = vec3(0.0);
 
-    vec3 viewDirection = normalize(viewPosition -fragPosition);
+    vec3 viewDirection = normalize(viewPosition - fragPosition);
     vec3 norm = normalize(normal);
 
     result += calculateDirectionLight(directionalLight, norm, viewDirection);
@@ -101,7 +104,7 @@ vec3 calculateSpecularLight(vec3 lightDirection, vec3 normal, vec3 viewDirection
 {
     normal = normalize(normal);
     vec3 reflectedLightDirection = reflect(-lightDirection, normal);
-    float spec = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), material.shininess);
+    float spec = pow(max(dot(viewDirection, reflectedLightDirection), 0.0), materialShininess);
 
     return spec * LightSpecular * vec3(texture(materialSpecular, textureCoordinates));
 }
