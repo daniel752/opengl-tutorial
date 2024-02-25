@@ -62,8 +62,8 @@ std::string pwd = std::filesystem::current_path().string();
 // Shader sources
 std::string lightVShaderPath = pwd + "/../shaders/light.vs";
 std::string lightFShaderPath = pwd + "/../shaders/light.fs";
-std::string modelVShaderPath = pwd + "/../shaders/mesh.vs";
-std::string modelFShaderPath = pwd + "/../shaders/mesh.fs";
+std::string meshVShaderPath = pwd + "/../shaders/mesh.vs";
+std::string meshFShaderPath = pwd + "/../shaders/mesh.fs";
 std::string modelPath = pwd + "/../../assets/backpack/backpack.obj";
 std::string cubePath = pwd + "/../../assets/cube/cube.obj";
 
@@ -110,7 +110,8 @@ float constant = CONSTANT;
 float linear = LINEAR;
 float quadratic = QUADRATIC;
 
-float alpha = 1.0f;
+float lightIntensity = 0.5f;
+float lightAlpha = 1.0f;
 
 glm::vec4 backgroundColor = DEFAULT_BACKGROUND_COLOR;
 glm::vec3 lightColor = DEFAULT_LIGHT_COLOR;
@@ -150,55 +151,54 @@ int main()
     glfwSetScrollCallback(window.getGlWindow(), scroll_callback);
     glfwSetKeyCallback(window.getGlWindow(), key_callback);
 
-    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    // stbi_set_flip_vertically_on_load(true);
-
-    // configure global opengl state
+    // Configure OpenGL to use depth buffer
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    // build and compile shaders
-    // -------------------------
-    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    // Tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
 
-    // build and compile shaders
+    // Build and compile shaders
     // -------------------------
-    Shader meshShader(modelVShaderPath.c_str(), modelFShaderPath.c_str());
+    Shader meshShader(meshVShaderPath.c_str(), meshFShaderPath.c_str());
     Shader lightShader(lightVShaderPath.c_str(), lightFShaderPath.c_str());
 
     Shader::enableDepth();
 
-    // load models
+    // Load models
     // -----------
     Model backpack(modelPath.c_str());
     Model cube(cubePath.c_str());
 
-    // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Uncomment to render models in wireframe
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // render loop
+    // Render loop
     // -----------
     while (!window.isShouldClose())
     {
-        // input
-        // -----
+        // Process input
+        // -------------
         processMovement(window.getGlWindow(), &camera);
 
-        // render
-        // ------
+        // Set background color and clear color buffer and depth buffer
+        // ------------------------------------------------------------
         glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.t);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // don't forget to enable shader before setting uniforms
-        // meshShader.use();
+        // Enabling our shader before using it's uniforms
+        // ----------------------------------------------
         lightShader.use();
 
         lightShader.setFloat("material.shininess", specularIntensity);
 
+        // Directional light creation
+        // --------------------------
         DirectionalLight directionalLight(lightDirection, directionalAmbient, directionalDiffuse, directionalSpecular);
         directionalLight.load(lightShader.getID());
 
+        // Point lights creation
+        // ---------------------
         std::vector<PointLight> pointLights;
         for(unsigned int i = 0; i < 5; i++)
         {
@@ -207,21 +207,28 @@ int main()
             pointLights[i].load(lightShader.getID());
         }
 
-        // view/projection transformations
+        // Transformations for view and projection
+        // ---------------------------------------
         glm::mat4 projection = glm::perspective(glm::radians(camera.getFov()), width / height, 0.1f, 100.0f);
         glm::mat4 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
         lightShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
         lightShader.setMatrix4fv("view", 1, GL_FALSE, view);
 
-        // render the loaded model
+        // Transformations for model
+        // -------------------------
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
         lightShader.setMatrix3fv("normalMatrix", 1, GL_TRUE, glm::mat3(glm::inverse(model)));
         lightShader.setMatrix4fv("model", 1, GL_FALSE, model);
+
+        // Render model
+        // ------------
         backpack.draw(lightShader);
         lightShader.unbind();
 
+        // Light cubes creation
+        // --------------------
         meshShader.use();
         meshShader.setVec3("color", glm::value_ptr(lightColor));
         meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
@@ -237,14 +244,10 @@ int main()
         }
         meshShader.unbind();
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         window.swapBuffers();
         glfwPollEvents();
     }
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
 }
@@ -353,22 +356,23 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Simple Day light set-up when user presses "1" key
     if(key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
-        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.2f)) * colors[1];
-        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.4f)) * colors[1];
-        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.4f)) * colors[1];
+        lightColor = colors[4];
+        lightAlpha = 0.5f;
+
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.2f)) * (lightColor * lightAlpha);
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.4f)) * (lightColor * lightAlpha);
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.4f)) * (lightColor * lightAlpha);
 
         spotLightAmbient = glm::vec3(0.0f);
         spotLightDiffuse = glm::vec3(0.0f);
         spotLightSpecular = glm::vec3(0.0f);
 
 
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[4];
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * colors[4];
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * colors[4];
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * (lightColor * lightAlpha);
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * (lightColor * lightAlpha);
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * (lightColor * lightAlpha);
 
         backgroundColor = DESERT_BACKGROUND_COLOR;
-
-        lightColor = colors[4];
 
         specularIntensity = 1;
 
@@ -384,18 +388,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if(key == GLFW_KEY_2 && action == GLFW_PRESS)
     {
         lightColor = colors[6];
+        lightAlpha = 0.5f;
 
-        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.05f)) * lightColor;
-        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * lightColor;
-        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * lightColor;
+        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * lightColor * lightAlpha;
+        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * lightColor * lightAlpha;
+        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * lightColor * lightAlpha;
 
         spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC * lightColor;
         spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC * lightColor;
         spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC * lightColor;
 
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * lightColor;
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * lightColor;
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * lightColor;
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * lightColor * lightAlpha;
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * lightColor * lightAlpha;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * lightColor * lightAlpha;
 
         backgroundColor = FACTORY_BACKGROUND_COLOR;
 
@@ -412,21 +417,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Simple horror light set-up when user presses "3" key
     if(key == GLFW_KEY_3 && action == GLFW_PRESS)
     {
-        directionalAmbient = glm::vec3(0.1f);
-        directionalDiffuse = glm::vec3(0.1f);
-        directionalSpecular = glm::vec3(0.1f);
+        lightColor = colors[0];
+        lightAlpha = 0.3f;
+
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC - glm::vec3(0.15f)) * lightColor * lightAlpha;
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC - glm::vec3(0.2f)) * lightColor * lightAlpha;
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC - glm::vec3(0.2f)) * lightColor * lightAlpha;
 
         spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
         spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
         spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
 
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC - glm::vec3(0.1f);
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC - glm::vec3(0.1f);
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC - glm::vec3(0.1f);
+        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * lightColor * lightAlpha;
+        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC * lightColor * lightAlpha;
+        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC * lightColor * lightAlpha;
 
         backgroundColor = DEFAULT_BACKGROUND_COLOR;
-
-        lightColor = colors[0];
 
         specularIntensity = SPECULAR_INTENSITY;
 
@@ -441,21 +447,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     // Simple lab light set-up when user presses "4" key
     if(key == GLFW_KEY_4 && action == GLFW_PRESS)
     {
-        directionalAmbient = DIR_LIGHT_AMBIENT_VEC * colors[3];
-        directionalDiffuse = DIR_LIGHT_DIFFUSE_VEC * colors[3];
-        directionalSpecular = DIR_LIGHT_SPECULAR_VEC * colors[3];
+        lightColor = colors[5];
+        lightAlpha = 0.5f;
+
+        directionalAmbient = (DIR_LIGHT_AMBIENT_VEC + glm::vec3(0.1f)) * lightColor * lightAlpha;
+        directionalDiffuse = (DIR_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * lightColor * lightAlpha;
+        directionalSpecular = (DIR_LIGHT_SPECULAR_VEC + glm::vec3(0.1f)) * lightColor * lightAlpha;
 
         spotLightAmbient = SPOT_LIGHT_AMBIENT_VEC;
         spotLightDiffuse = SPOT_LIGHT_DIFFUSE_VEC;
         spotLightSpecular = SPOT_LIGHT_SPECULAR_VEC;
 
-        pointLightAmbient = POINT_LIGHT_AMBIENT_VEC * colors[3];
-        pointLightDiffuse = POINT_LIGHT_DIFFUSE_VEC;
-        pointLightSpecular = POINT_LIGHT_SPECULAR_VEC;
+        pointLightAmbient = (POINT_LIGHT_AMBIENT_VEC + glm::vec3(0.1f)) * lightColor * lightAlpha;
+        pointLightDiffuse = (POINT_LIGHT_DIFFUSE_VEC + glm::vec3(0.1f)) * lightColor * lightAlpha;
+        pointLightSpecular = (POINT_LIGHT_SPECULAR_VEC + glm::vec3(0.1f)) * lightColor * lightAlpha;
 
         backgroundColor = LAB_BACKGROUND_COLOR;
-
-        lightColor = colors[3];
 
         specularIntensity = SPECULAR_INTENSITY;
 
