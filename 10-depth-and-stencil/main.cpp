@@ -113,6 +113,19 @@ int main()
         glm::mat4 projection = glm::perspective(camera.getFov(), width / height, 0.1f, 100.0f);
         glm::mat4 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
 
+        // Enable shader before setting uniforms
+        meshShader.use();
+        meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
+        meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
+
+        // Render our floor in scene without writing any values to stencil buffer, we only care about the other rendered cubes
+        Shader::lockStencilBuffer();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.0f, 0.01f, 1.0f));
+        meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
+        cube.draw(meshShader);
+
         // Set stencil test to always pass and write values as is
         // This will fill the stencil buffer with 1's wherever the object fragments are rendered
         Shader::stencilFunctionality(GL_ALWAYS, 1, 0xFF);
@@ -121,19 +134,13 @@ int main()
 
         // Render cubes
         // ------------------------------------------------
-        // Enable shader before setting uniforms
-        meshShader.use();
-        meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
-
-        glm::mat4 model = glm::mat4(1.0f);
         // Set first cube at the center of the scene
+        model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
         // Scale it down cause the cube model is huge
         model = glm::scale(model, glm::vec3(0.015f));
         // Set uniform model matrix in shader
         meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
-
         // Render first cube
         cube.draw(meshShader);
 
@@ -146,11 +153,18 @@ int main()
         // Render second cube
         cube.draw(meshShader);
 
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 10.0f));
+        model = glm::scale(model, glm::vec3(0.015f));
+        meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
+        cube.draw(meshShader);
+
         // Set stencil test to pass only values as is that are NOT equal to 1
         // This way it will only render fragments that don't overlap with the fragments from the cubes
         // Since we scale the cubes (a few lines below) a little bigger than only the fragments between the edges of the cubes will be rendered
         Shader::stencilFunctionality(GL_NOTEQUAL, 1, 0xFF);
         Shader::lockStencilBuffer();
+        glDisable(GL_DEPTH_TEST);
 
         colorShader.use();
         // Set the color of the border, the rendered fragments between the edges of the cubes
@@ -166,8 +180,8 @@ int main()
         model = glm::scale(model, glm::vec3(0.017f));
         // Set uniform model matrix in shader
         colorShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        // Render first cube
-        cube.draw(meshShader);
+        // Render first cube border
+        cube.draw(colorShader);
 
         // Set second cube with a little offset on the Z-axis
         model = glm::mat4(1.0f);
@@ -175,11 +189,19 @@ int main()
         // Scale it down cause the cube model is huge
         model = glm::scale(model, glm::vec3(0.017f));
         colorShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        // Render second cube
-        cube.draw(meshShader);
+        // Render second cube border
+        cube.draw(colorShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 10.0f));
+        model = glm::scale(model, glm::vec3(0.017f));
+        colorShader.setMatrix4fv("model", 1, GL_FALSE, model);
+        cube.draw(colorShader);
 
         // When done with stencil buffer then enable back writing to it so the rest of the scene can render normaly
         Shader::unlockStencilBuffer();
+        // Shader::stencilFunctionality(GL_ALWAYS, 1, 0xFF);
+        Shader::enableDepth();
 
         window.swapBuffers();
         glfwPollEvents();
