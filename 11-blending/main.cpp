@@ -28,8 +28,8 @@ std::string meshVShaderPath = pwd + "/../shaders/mesh.vs";
 std::string meshFShaderPath = pwd + "/../shaders/mesh.fs";
 std::string colorVShaderPath = pwd + "/../shaders/singleColor.vs";
 std::string colorFShaderPath = pwd + "/../shaders/singleColor.fs";
-std::string grassVShaderPath = pwd + "/../shaders/grass.vs";
-std::string grassFShaderPath = pwd + "/../shaders/grass.fs";
+std::string blendingVShaderPath = pwd + "/../shaders/blending.vs";
+std::string blendingFShaderPath = pwd + "/../shaders/blending.fs";
 std::string modelPath = pwd + "/../../assets/backpack/backpack.obj";
 std::string cubePath = pwd + "/../../assets/cube/cube.obj";
 
@@ -53,7 +53,7 @@ float lastX = width / 2.0f;
 float lastY = height / 2.0f;
 
 // Verticies for a simple 2D quad to display grass texture on
-float grassVertices[] =
+float windowVertices[] =
 {
     // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
     0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
@@ -65,7 +65,7 @@ float grassVertices[] =
     1.0f,  0.5f,  0.0f,  1.0f,  0.0f
 };
 
-std::vector<glm::vec3> grassLocations = 
+std::vector<glm::vec3> windowsPositions = 
 {
     glm::vec3(0.0f, 0.5f, -3.0f),
     glm::vec3(3.0f, 0.5f, -3.0f),
@@ -74,6 +74,8 @@ std::vector<glm::vec3> grassLocations =
     glm::vec3(-5.0f, 0.5f, -7.0f),
     glm::vec3(-6.25f, 0.5f, -2.0f),
     glm::vec3(1.75f, 0.5f, 5.5f),
+    glm::vec3(3.0f, 0.5f, 10.0f),
+    glm::vec3(0.0f, 0.5f, -10.0f),
 };
 
 int main()
@@ -95,40 +97,42 @@ int main()
     // Build and compile shaders
     Shader meshShader(meshVShaderPath.c_str(), meshFShaderPath.c_str());
     Shader colorShader(colorVShaderPath.c_str(), colorFShaderPath.c_str());
-    Shader grassShader(grassVShaderPath.c_str(), grassFShaderPath.c_str());
+    Shader blendShader(blendingVShaderPath.c_str(), blendingFShaderPath.c_str());
 
     // Configure OpenGL to use depth buffer
     Shader::enableGL(GL_DEPTH_TEST);
+    Shader::enableGL(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Load model
     Model cube(cubePath.c_str());
 
     // Creating 2D quad for grass texture
-    unsigned int grassVAO, grassVBO;
-    glGenVertexArrays(1, &grassVAO);
-    glGenBuffers(1, &grassVBO);
-    glBindVertexArray(grassVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, grassVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(grassVertices), grassVertices, GL_STATIC_DRAW);
+    unsigned int windowVAO, windowVBO;
+    glGenVertexArrays(1, &windowVAO);
+    glGenBuffers(1, &windowVBO);
+    glBindVertexArray(windowVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, windowVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(windowVertices), windowVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
     // Create new texture object
-    Texture grassTexture(pwd + "/../../assets/grass.png");
-    grassTexture.setTextureId(0);
-    grassTexture.setTextureUnit(GL_TEXTURE0);
+    Texture windowTexture(pwd + "/../../assets/transparent_window.png");
+    windowTexture.setTextureId(0);
+    windowTexture.setTextureUnit(GL_TEXTURE0);
     // The default wrapping parameter is GL_REPEAT which is usually ok but when using transparent textures
     // we can have a small white line at the edge of the transparent texture, so using GL_CLAMP_TO_EDGE fixes that
-    // grassTexture.setWrappingParams(GL_CLAMP_TO_EDGE);
+    // windowTexture.setWrappingParams(GL_CLAMP_TO_EDGE);
     // Load texture
-    grassTexture.loadTexture();
-    grassTexture.useTexture();
+    windowTexture.loadTexture();
+    windowTexture.useTexture();
 
-    grassShader.use();
+    blendShader.use();
     // Point shader's uniform sampler2D to point to texture unit 0
-    grassShader.setInt("texture1", 0);
+    blendShader.setInt("texture1", 0);
 
     // Uncomment to render models in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -151,21 +155,21 @@ int main()
         glm::mat4 projection = glm::perspective(camera.getFov(), width / height, 0.1f, 100.0f);
         glm::mat4 view = camera.calculateLookAtMatrix(camera.getPosition(), camera.getPosition() + camera.getFront(), camera.getUp());
 
-        colorShader.use();
-        colorShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        colorShader.setMatrix4fv("view", 1, GL_FALSE, view);
+        meshShader.use();
+        meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
+        meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
 
         // Render our floor in scene without writing any values to stencil buffer, we only care about the other rendered cubes
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -1.1f, 0.0f));
         model = glm::scale(model, glm::vec3(1.0f, 0.01f, 1.0f));
-        colorShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        colorShader.setVec3("color", glm::value_ptr(glm::vec3(0.2f, 0.4f, 0.7f)));
-        cube.draw(colorShader);
+        meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
+        meshShader.setVec3("color", glm::value_ptr(glm::vec3(0.2f, 0.4f, 0.7f)));
+        cube.draw(meshShader);
 
-        meshShader.use();
-        meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
+        // meshShader.use();
+        // meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
+        // meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
 
         // Render cubes
         // ------------------------------------------------
@@ -195,17 +199,29 @@ int main()
         meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
         cube.draw(meshShader);
 
-        // Render grass
+        // Render transparent windows
         // ------------------------------------------------
-        grassShader.use();
-        grassShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        grassShader.setMatrix4fv("view" , 1, GL_FALSE, view);
-        glBindVertexArray(grassVAO);
-        for(unsigned int i = 0; i < grassLocations.size(); i++)
+        // Sorting windows positions according to their distance from camera
+        // We need to render the windows from the farthest window to the closest one
+        // We just create a map with the distance as key and the map will automatically sort the keys for us from low to high
+        std::map<float, glm::vec3> sortedWindows;
+        for(unsigned int i = 0; i < windowsPositions.size(); i++)
+        {
+            float distance = glm::length(camera.getPosition() - windowsPositions[i]);
+            sortedWindows[distance] = windowsPositions[i];
+        }
+
+        blendShader.use();
+        blendShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
+        blendShader.setMatrix4fv("view" , 1, GL_FALSE, view);
+        glBindVertexArray(windowVAO);
+        // Iterate sorted windows in reverse order so we start from the highest (farthest) to the lowest (closest)
+        // and render the windows in this order
+        for(std::map<float, glm::vec3>::reverse_iterator iter = sortedWindows.rbegin(); iter != sortedWindows.rend(); ++iter)
         {
             model = glm::mat4(1.0f);
-            model = glm::translate(model, grassLocations[i]);
-            grassShader.setMatrix4fv("model", 1, GL_FALSE, model);
+            model = glm::translate(model, iter->second);
+            blendShader.setMatrix4fv("model", 1, GL_FALSE, model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
