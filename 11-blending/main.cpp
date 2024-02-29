@@ -163,10 +163,6 @@ int main()
         meshShader.setVec3("color", glm::value_ptr(glm::vec3(0.2f, 0.4f, 0.7f)));
         cube.draw(meshShader);
 
-        // meshShader.use();
-        // meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        // meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
-
         // Render cubes
         // ------------------------------------------------
         meshShader.setVec3("color", glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
