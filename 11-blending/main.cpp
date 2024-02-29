@@ -121,10 +121,6 @@ int main()
 
     // Create new texture object
     Texture windowTexture(pwd + "/../../assets/transparent_window.png");
-    windowTexture.setTextureId(0);
-    windowTexture.setTextureUnit(GL_TEXTURE0);
-    // The default wrapping parameter is GL_REPEAT which is usually ok but when using transparent textures
-    // we can have a small white line at the edge of the transparent texture, so using GL_CLAMP_TO_EDGE fixes that
     // windowTexture.setWrappingParams(GL_CLAMP_TO_EDGE);
     // Load texture
     windowTexture.loadTexture();

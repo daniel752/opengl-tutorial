@@ -50,6 +50,7 @@ void Texture::loadTexture()
 
     // Generate 1 texture and bind it to "textureId"
     glGenTextures(1, &textureId);
+    std::cout << "texturte id " << textureId << std::endl;
     // stbi_set_flip_vertically_on_load(true);
 
     // Define the format of image according to number of channels in image (number of color components)
@@ -76,6 +77,8 @@ void Texture::loadTexture()
     glGenerateMipmap(target);
 
     // Set texture wrapping params
+    // The default wrapping parameter is GL_REPEAT which is usually ok but when using transparent textures
+    // we can have a small white line at the edge of the transparent texture, so using GL_CLAMP_TO_EDGE fixes that
     glTexParameteri(target, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
 

@@ -78,11 +78,11 @@ void Mesh::draw(Shader &shader)
 		if(name == "texture_diffuse")
 			number = std::to_string(diffuseNr++);
 		else if(name == "texture_specular")
-			number = std::to_string(specularNr++); // transfer unsigned int to string
+			number = std::to_string(specularNr++);
 		else if(name == "texture_normal")
-			number = std::to_string(normalNr++); // transfer unsigned int to string
+			number = std::to_string(normalNr++);
 			else if(name == "texture_height")
-			number = std::to_string(heightNr++); // transfer unsigned int to string
+			number = std::to_string(heightNr++);
 
 		// now set the sampler to the correct texture unit
         shader.setInt(("material." + name.substr(name.find('_'))), i);
