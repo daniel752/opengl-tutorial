@@ -2,11 +2,25 @@
 
 out vec4 fragColor;
 
-in vec2 textureCoordinates;
+in vec3 normal;
+in vec3 position;
 
-uniform sampler2D texture1;
+uniform samplerCube skybox;
+uniform vec3 cameraPosition;
 
 void main()
 {
-    fragColor = texture(texture1, textureCoordinates);
+    // Reflection
+    // ---------------------------------------------
+    // vec3 I = normalize(position - cameraPosition);
+    // vec3 R = reflect(I, normalize(normal));
+    // fragColor = vec4(texture(skybox, R).rgb, 1.0);
+    
+    // Refraction
+    // ---------------------------------------------
+    vec3 I = normalize(position - cameraPosition);
+    const float airRefraction = 1.0;
+    const float glassRefraction = 1.52;
+    vec3 R = refract(I, normalize(normal), airRefraction / glassRefraction);
+    fragColor = vec4(texture(skybox, R).rgb, 1.0);
 }
