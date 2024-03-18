@@ -41,19 +41,6 @@ public:
     std::string readFile(std::string filename);
 
     /**
-     * @brief Load texture from image in local storage
-     * @param filename Path to image file.
-     * @param texture Pointer to texture variable to bind texture image to.
-     * @param target Specifies which target to apply operations (GL_TEXTURE_2D, GL_ARRAY_BUFFER, etc.).
-     * @param level Specifies level of detail, level 0 is base image and level n is nth mimap image reduction.
-     * @param internalFormat Specifies number of colors components in texture.
-     * @param border This value must be 0.
-     * @param format Specifies the format of pixel data from texture image.
-     * @param type Specifies the data type of pixel data from texture image.
-    */
-    void loadTexture(std::string filename, GLuint *texture, GLenum target, GLenum textureParam, GLenum filterParam, GLint level, GLint internalFormat, GLint border, GLint format, GLenum type);
-    
-    /**
      * @brief Use this object's shader program.
     */
     void use();
@@ -63,7 +50,9 @@ public:
     */
     void clear();
 
-    static void enableGL(GLenum x);
+    static void enableGL(GLenum func);
+    static void disableGL(GLenum func);
+    
     // OpenGL depth test functions
     static void depthMask(bool mask);
     static void depthFunctionality(GLenum functionality);

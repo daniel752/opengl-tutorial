@@ -1,12 +1,6 @@
 #include "glWindow.h"
 #include "shader.h"
-#include "texture.h"
-#include "model.h"
 #include "camera.h"
-#include "stb_image.h"
-
-#include <sstream>
-#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -26,10 +20,6 @@ std::string pwd = std::filesystem::current_path().string();
 // Shader paths
 std::string meshVShaderPath = pwd + "/../shaders/mesh.vs";
 std::string meshFShaderPath = pwd + "/../shaders/mesh.fs";
-std::string blendingVShaderPath = pwd + "/../shaders/blending.vs";
-std::string blendingFShaderPath = pwd + "/../shaders/blending.fs";
-std::string modelPath = pwd + "/../../assets/backpack/backpack.obj";
-std::string cubePath = pwd + "/../../assets/cube/cube.obj";
 
 // Model transformation matrix
 glm::mat4 model;
@@ -50,30 +40,51 @@ bool firstMouse = true;
 float lastX = width / 2.0f;
 float lastY = height / 2.0f;
 
-// Verticies for a simple 2D quad to display grass texture on
-float windowVertices[] =
+// Cube verticies in couter-clockwise winding order
+float cubeVertices[] = 
 {
-    // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
-    0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-    0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
-    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-
-    0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-    1.0f,  0.5f,  0.0f,  1.0f,  0.0f
-};
-
-std::vector<glm::vec3> windowsPositions = 
-{
-    glm::vec3(0.0f, 0.5f, -3.0f),
-    glm::vec3(3.0f, 0.5f, -3.0f),
-    glm::vec3(-3.0f, 0.5f, 3.0f),
-    glm::vec3(5.0f, 0.5f, 7.0f),
-    glm::vec3(-5.0f, 0.5f, -7.0f),
-    glm::vec3(-6.25f, 0.5f, -2.0f),
-    glm::vec3(1.75f, 0.5f, 5.5f),
-    glm::vec3(3.0f, 0.5f, 10.0f),
-    glm::vec3(0.0f, 0.5f, -10.0f),
+    // Back face
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right         
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+    // Front face
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+    // Left face
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+    // Right face
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right         
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left     
+    // Bottom face
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+    // Top face
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right     
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f  // bottom-left        
 };
 
 int main()
@@ -89,43 +100,30 @@ int main()
     glfwSetScrollCallback(window.getGlWindow(), scroll_callback);
     glfwSetKeyCallback(window.getGlWindow(), key_callback);
 
-    // Tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    // stbi_set_flip_vertically_on_load(true);
-
     // Build and compile shaders
     Shader meshShader(meshVShaderPath.c_str(), meshFShaderPath.c_str());
-    Shader blendShader(blendingVShaderPath.c_str(), blendingFShaderPath.c_str());
 
-    // Configure OpenGL to use depth buffer
-    Shader::enableGL(GL_DEPTH_TEST);
-    Shader::enableGL(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Configure OpenGL to use face culling
+    Shader::enableGL(GL_CULL_FACE);
+    // Tell OpenGL to cull front faces
+    glCullFace(GL_FRONT);
 
-    // Load model
-    Model cube(cubePath.c_str());
+    // The same effect can be achieved also by telling OpenGL to cull back faces
+    // and also change the front faces to be clockwise winding (so every face OpenGL considered as back is now front) 
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CW);
 
-    // Creating 2D quad for grass texture
-    unsigned int windowVAO, windowVBO;
-    glGenVertexArrays(1, &windowVAO);
-    glGenBuffers(1, &windowVBO);
-    glBindVertexArray(windowVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, windowVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(windowVertices), windowVertices, GL_STATIC_DRAW);
+    unsigned int vertexArray, vertexBuffer;
+    glGenVertexArrays(1, &vertexArray);
+    glGenBuffers(1, &vertexBuffer);
+    glBindVertexArray(vertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    // Create new texture object
-    Texture windowTexture(pwd + "/../../assets/transparent_window.png");
-    // windowTexture.setWrappingParams(GL_CLAMP_TO_EDGE);
-    // Load texture
-    windowTexture.loadTexture();
-    windowTexture.useTexture();
-
-    blendShader.use();
-    // Point shader's uniform sampler2D to point to texture unit 0
-    blendShader.setInt("texture1", 0);
+    
 
     // Uncomment to render models in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -152,67 +150,12 @@ int main()
         meshShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
         meshShader.setMatrix4fv("view", 1, GL_FALSE, view);
 
-        // Render our floor in scene without writing any values to stencil buffer, we only care about the other rendered cubes
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -1.1f, 0.0f));
-        model = glm::scale(model, glm::vec3(1.0f, 0.01f, 1.0f));
-        meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        meshShader.setVec3("color", glm::value_ptr(glm::vec3(0.2f, 0.4f, 0.7f)));
-        cube.draw(meshShader);
-
-        // Render cubes
-        // ------------------------------------------------
-        meshShader.setVec3("color", glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
-        // Set first cube at the center of the scene
+        glBindVertexArray(vertexArray);
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-        // Scale it down cause the cube model is huge
-        model = glm::scale(model, glm::vec3(0.015f));
-        // Set uniform model matrix in shader
+        model = glm::translate(model, glm::vec3(0.0f));
         meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        // Render first cube
-        cube.draw(meshShader);
-
-        // Set second cube with a little offset on the Z-axis
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
-        // Scale it down cause the cube model is huge
-        model = glm::scale(model, glm::vec3(0.015f));
-        meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        // Render second cube
-        cube.draw(meshShader);
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 10.0f));
-        model = glm::scale(model, glm::vec3(0.015f));
-        meshShader.setMatrix4fv("model", 1, GL_FALSE, model);
-        cube.draw(meshShader);
-
-        // Render transparent windows
-        // ------------------------------------------------
-        // Sorting windows positions according to their distance from camera
-        // We need to render the windows from the farthest window to the closest one
-        // We just create a map with the distance as key and the map will automatically sort the keys for us from low to high
-        std::map<float, glm::vec3> sortedWindows;
-        for(unsigned int i = 0; i < windowsPositions.size(); i++)
-        {
-            float distance = glm::length(camera.getPosition() - windowsPositions[i]);
-            sortedWindows[distance] = windowsPositions[i];
-        }
-
-        blendShader.use();
-        blendShader.setMatrix4fv("projection", 1, GL_FALSE, projection);
-        blendShader.setMatrix4fv("view" , 1, GL_FALSE, view);
-        glBindVertexArray(windowVAO);
-        // Iterate sorted windows in reverse order so we start from the highest (farthest) to the lowest (closest)
-        // and render the windows in this order
-        for(std::map<float, glm::vec3>::reverse_iterator iter = sortedWindows.rbegin(); iter != sortedWindows.rend(); ++iter)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, iter->second);
-            blendShader.setMatrix4fv("model", 1, GL_FALSE, model);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
+        meshShader.setVec3("color", glm::value_ptr(glm::vec3(0.9f)));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         window.swapBuffers();
         glfwPollEvents();

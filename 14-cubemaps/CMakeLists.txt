@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(blending)
+project(cubemaps)
 
-add_executable(main.o main.cpp glWindow.cpp camera.cpp texture.cpp mesh.cpp model.cpp shader.cpp stb_image.cpp)
+add_executable(main.o main.cpp glWindow.cpp camera.cpp texture.cpp shader.cpp stb_image.cpp cubemap.cpp)
 
 find_package(GLEW REQUIRED)
 target_link_libraries(main.o GLEW::GLEW)
