@@ -159,7 +159,7 @@ int main()
 
     unsigned int cubeVao, cubeVbo;
     glGenVertexArrays(1, &cubeVao);
-    glGenBuffers(1, & cubeVbo);
+    glGenBuffers(1, &cubeVbo);
     glBindVertexArray(cubeVao);
     glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
